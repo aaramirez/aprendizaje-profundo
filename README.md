@@ -4,7 +4,7 @@ Cómo aprende una red neuronal, de la neurona a las redes convolucionales y recu
 
 **Ver en línea:** https://aaramirez.github.io/aprendizaje-profundo/
 
-Este repositorio solo tiene el sitio generado. El curso está en preparación: la tabla de contenido ya está publicada para revisión.
+Este repositorio solo tiene el sitio generado. Curso completo: 10 capítulos con laboratorios interactivos (redes que entrenan en el navegador y un lienzo para dibujar dígitos), diagramas y prácticas.
 
 | # | Capítulo |
 |---|---|

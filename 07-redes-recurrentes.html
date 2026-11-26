@@ -1,0 +1,711 @@
+<!doctype html>
+<html lang="es">
+<head>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-KX76XF8R');</script>
+<!-- End Google Tag Manager -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Redes recurrentes · Aprendizaje profundo · Aprendizaje profundo</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Cómo aprende una red neuronal, de la neurona a las redes convolucionales y recurrentes, con redes que se entrenan dentro de la página y el gradiente a la vista.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400;1,8..60,600&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KX76XF8R"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+<div class="wrap" data-page="redes-recurrentes">
+<header class="topbar"><a class="brand" href="index.html">Aprendizaje <b>profundo</b></a><span class="eyebrow">Curso visual e interactivo · Datos e inteligencia artificial</span><a class="al-sitio" href="https://aaramirez.github.io/">← Todos los cursos</a></header>
+<div class="layout">
+<nav class="toc" id="toc" aria-label="Ruta de aprendizaje"></nav>
+<main>
+<header class="page-head"><span class="num">CAPÍTULO 07 DE 10</span><h1>Redes recurrentes y secuencias</h1><p class="lede">Un texto, una grabación o una serie de números diarios no se entienden pieza por pieza: importa el orden. Una red recurrente lee una secuencia paso a paso con el mismo bloque y lleva un estado que funciona como memoria. Este capítulo muestra por qué esa memoria se desvanece, cómo la arreglaron las LSTM con sus compuertas y por qué, aun así, las recurrentes dejaron paso a la atención.</p></header>
+<section><h2>Datos en secuencia: el orden importa</h2><div class="prose"><p>La red convolucional ya lee las casillas sueltas, y Simón Arce quiere el paso siguiente. «Las casillas no viven solas», le dijo a Paula. «Una fecha tiene día, mes y año, y el día no puede ser 45. El monto se escribe dos veces, en números y en letras, y las dos tienen que coincidir. ¿Puede la red leer el campo entero?». Rosa Duarte agregó su experiencia: cuando un dígito está borroso, ella mira los de al lado. En una fecha, un dígito dudoso después de «3» es casi seguro un 0 o un 1.</p><p>Hasta aquí, cada red del curso recibe una entrada de tamaño fijo (196 píxeles) y devuelve una respuesta. Muchos datos no son así. Son una <b>secuencia</b> (<i>sequence</i>): una serie de elementos donde el orden lleva información.</p><ul><li><b>Texto</b>: «el perro mordió al cartero» y «el cartero mordió al perro» tienen las mismas palabras.</li><li><b>Audio</b>: una grabación es una serie de miles de muestras por segundo; el sonido de una sílaba depende de las anteriores.</li><li><b>Series de tiempo</b> (<i>time series</i>): los formularios que llegan cada día a la oficina, el consumo eléctrico de cada hora, la cotización de cada minuto.</li><li><b>Campos de un formulario</b>: los caracteres de un número de documento, de una fecha o de un monto, uno detrás de otro.</li></ul><p>Las secuencias tienen además largos distintos: una fecha tiene 8 caracteres y una dirección, 40. Una red densa necesita un número fijo de entradas y tendría que aprender por separado qué significa una coma en la posición 5 y en la 12.</p></div><div class="analogia"><b>Imagínalo así</b><p>Cuando lees una novela no guardas cada palabra: llevas en la cabeza un resumen de lo que pasó hasta ahora, y cada frase nueva lo actualiza. Si en el capítulo 3 alguien guardó una llave en un cajón, esa información viaja contigo hasta el capítulo 20, donde importa. Una red recurrente hace lo mismo: lee un elemento por vez y actualiza un resumen que lleva consigo.</p></div></section>
+<section><h2>La red recurrente: el mismo bloque aplicado en cada paso</h2><div class="prose"><p>Una <b>red neuronal recurrente</b> (<i>recurrent neural network</i>, RNN) procesa la secuencia de a un elemento por vez. En cada paso <span class="math">t</span> recibe la entrada <span class="math">x_t</span> (un carácter, una fila de píxeles, el dato de un día) y su propio <b>estado oculto</b> (<i>hidden state</i>) del paso anterior, <span class="math">h_{t-1}</span>, un vector de números que hace de memoria. Con los dos calcula el estado nuevo:</p><div class="math-display">h_t = \tanh(W h_{t-1} + U x_t + b)</div><p><span class="math">U</span> son los pesos que miran la entrada, <span class="math">W</span> los que miran la memoria y <span class="math">b</span> un sesgo. La activación es la <b>tangente hiperbólica</b> (<i>tanh</i>) del capítulo 1, que deja cada número del estado entre −1 y 1. Si hace falta una salida en ese paso, sale del estado con otra capa: <span class="math">y_t = V h_t</span>. El primer estado, <span class="math">h_0</span>, suele ser un vector de ceros.</p><p>Lo importante es lo que no cambia: <span class="math">W</span>, <span class="math">U</span>, <span class="math">b</span> y <span class="math">V</span> son <b>los mismos en todos los pasos</b>. La red es un solo bloque que se aplica una y otra vez, y que se pasa el estado a sí mismo. Por eso se dibuja con un lazo. Es la misma idea de la convolución, llevada al tiempo: la CNN usa el mismo filtro en cada posición de la imagen; la RNN usa el mismo bloque en cada paso de la secuencia. Con eso acepta secuencias de cualquier largo con un número fijo de pesos.</p></div><figure class="fig fig-esquema" id="07-diagrama-1"><div class="lienzo"><svg viewBox="0 0 900 360" style="min-width:720px" role="img" aria-label="Una red recurrente plegada y desplegada en el tiempo. A la izquierda, un solo bloque que recibe la entrada x sub t, entrega el estado h sub t y se pasa ese estado a sí mismo con una flecha en lazo. A la derecha, el mismo bloque copiado cuatro veces, uno por cada carácter de 3 5 coma 5, con el estado que pasa de un paso al siguiente y los mismos pesos W, U y V en todas las copias">
+<defs>
+<marker id="c7d1-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="k-sis"/></marker>
+<marker id="c7d1-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="k-tra"/></marker>
+<marker id="c7d1-c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="k-apl"/></marker>
+</defs>
+
+<text x="20" y="30" class="t t-b">PLEGADA</text>
+<text x="20" y="48" class="t t-s t-m">un bloque con un lazo</text>
+<rect x="60" y="140" width="110" height="70" rx="10" class="c-tra"/>
+<text x="115" y="172" class="t t-b k-tra" text-anchor="middle">bloque</text>
+<text x="115" y="192" class="t t-s t-mono" text-anchor="middle">tanh(W·h + U·x)</text>
+<path d="M170 160C230 160 230 100 115 100C100 100 100 120 100 138" class="ln s-tra" style="stroke-width:2" marker-end="url(#c7d1-b)"/>
+<text x="210" y="98" class="t t-s k-tra">h<tspan dy="3" class="t-xs">t−1</tspan></text>
+<text x="226" y="128" class="t t-s t-mono k-tra">W</text>
+<path d="M115 270V214" class="ln" style="stroke:var(--d-sis);stroke-width:2" marker-end="url(#c7d1-a)"/>
+<rect x="90" y="272" width="50" height="34" rx="6" class="d-sis"/>
+<text x="115" y="294" class="t t-b k-sis" text-anchor="middle">x<tspan dy="3" class="t-xs">t</tspan></text>
+<text x="128" y="250" class="t t-s t-mono k-sis">U</text>
+<path d="M60 175H34V100" class="ln s-apl" style="stroke-width:2" marker-end="url(#c7d1-c)"/>
+<rect x="14" y="66" width="44" height="32" rx="6" class="c-apl"/><text x="36" y="87" class="t t-s k-apl" text-anchor="middle">y<tspan dy="3" class="t-xs">t</tspan></text>
+<text x="40" y="132" class="t t-s t-mono k-apl">V</text>
+<text x="20" y="335" class="t t-s t-m">x: entrada · h: estado (memoria) · y: salida</text>
+
+<text x="262" y="186" class="t t-b t-m" style="font-size:22px">=</text>
+
+<text x="300" y="30" class="t t-b">DESPLEGADA EN EL TIEMPO</text>
+<text x="300" y="48" class="t t-s t-m">el mismo bloque, una copia por paso, con los mismos pesos</text>
+<g>
+<rect x="300" y="152" width="44" height="46" rx="8" class="caja"/>
+<text x="322" y="180" class="t t-s t-mono" text-anchor="middle">h₀ = 0</text>
+</g>
+<g class="t">
+
+<rect x="370" y="140" width="96" height="70" rx="10" class="c-tra"/><text x="418" y="170" class="t t-b k-tra" text-anchor="middle">bloque</text><text x="418" y="190" class="t t-xs t-m" text-anchor="middle">PASO 1</text>
+<rect x="510" y="140" width="96" height="70" rx="10" class="c-tra"/><text x="558" y="170" class="t t-b k-tra" text-anchor="middle">bloque</text><text x="558" y="190" class="t t-xs t-m" text-anchor="middle">PASO 2</text>
+<rect x="650" y="140" width="96" height="70" rx="10" class="c-tra"/><text x="698" y="170" class="t t-b k-tra" text-anchor="middle">bloque</text><text x="698" y="190" class="t t-xs t-m" text-anchor="middle">PASO 3</text>
+<rect x="790" y="140" width="96" height="70" rx="10" class="c-tra"/><text x="838" y="170" class="t t-b k-tra" text-anchor="middle">bloque</text><text x="838" y="190" class="t t-xs t-m" text-anchor="middle">PASO 4</text>
+</g>
+<path d="M344 175H366" class="ln s-tra" style="stroke-width:2" marker-end="url(#c7d1-b)"/>
+<path d="M466 175H506" class="ln s-tra" style="stroke-width:2" marker-end="url(#c7d1-b)"/><text x="486" y="166" class="t t-s k-tra" text-anchor="middle">h₁</text><text x="486" y="196" class="t t-xs t-mono k-tra" text-anchor="middle">W</text>
+<path d="M606 175H646" class="ln s-tra" style="stroke-width:2" marker-end="url(#c7d1-b)"/><text x="626" y="166" class="t t-s k-tra" text-anchor="middle">h₂</text><text x="626" y="196" class="t t-xs t-mono k-tra" text-anchor="middle">W</text>
+<path d="M746 175H786" class="ln s-tra" style="stroke-width:2" marker-end="url(#c7d1-b)"/><text x="766" y="166" class="t t-s k-tra" text-anchor="middle">h₃</text><text x="766" y="196" class="t t-xs t-mono k-tra" text-anchor="middle">W</text>
+
+<rect x="398" y="272" width="40" height="34" rx="6" class="d-sis"/><text x="418" y="295" class="t t-b t-mono k-sis" text-anchor="middle">3</text>
+<rect x="538" y="272" width="40" height="34" rx="6" class="d-sis"/><text x="558" y="295" class="t t-b t-mono k-sis" text-anchor="middle">5</text>
+<rect x="678" y="272" width="40" height="34" rx="6" class="d-sis"/><text x="698" y="295" class="t t-b t-mono k-sis" text-anchor="middle">,</text>
+<rect x="818" y="272" width="40" height="34" rx="6" class="d-sis"/><text x="838" y="295" class="t t-b t-mono k-sis" text-anchor="middle">5</text>
+<path d="M418 270V214" class="ln" style="stroke:var(--d-sis);stroke-width:2" marker-end="url(#c7d1-a)"/><text x="426" y="248" class="t t-xs t-mono k-sis">U</text>
+<path d="M558 270V214" class="ln" style="stroke:var(--d-sis);stroke-width:2" marker-end="url(#c7d1-a)"/><text x="566" y="248" class="t t-xs t-mono k-sis">U</text>
+<path d="M698 270V214" class="ln" style="stroke:var(--d-sis);stroke-width:2" marker-end="url(#c7d1-a)"/><text x="706" y="248" class="t t-xs t-mono k-sis">U</text>
+<path d="M838 270V214" class="ln" style="stroke:var(--d-sis);stroke-width:2" marker-end="url(#c7d1-a)"/><text x="846" y="248" class="t t-xs t-mono k-sis">U</text>
+
+<path d="M418 140V102" class="ln s-apl" style="stroke-width:2" marker-end="url(#c7d1-c)"/><text x="426" y="124" class="t t-xs t-mono k-apl">V</text>
+<path d="M558 140V102" class="ln s-apl" style="stroke-width:2" marker-end="url(#c7d1-c)"/><text x="566" y="124" class="t t-xs t-mono k-apl">V</text>
+<path d="M698 140V102" class="ln s-apl" style="stroke-width:2" marker-end="url(#c7d1-c)"/><text x="706" y="124" class="t t-xs t-mono k-apl">V</text>
+<path d="M838 140V102" class="ln s-apl" style="stroke-width:2" marker-end="url(#c7d1-c)"/><text x="846" y="124" class="t t-xs t-mono k-apl">V</text>
+<rect x="388" y="66" width="60" height="32" rx="6" class="c-apl"/><text x="418" y="87" class="t t-s k-apl" text-anchor="middle">y₁</text>
+<rect x="528" y="66" width="60" height="32" rx="6" class="c-apl"/><text x="558" y="87" class="t t-s k-apl" text-anchor="middle">y₂</text>
+<rect x="668" y="66" width="60" height="32" rx="6" class="c-apl"/><text x="698" y="87" class="t t-s k-apl" text-anchor="middle">y₃</text>
+<rect x="808" y="66" width="60" height="32" rx="6" class="c-apl"/><text x="838" y="87" class="t t-s k-apl" text-anchor="middle">y₄</text>
+<text x="300" y="335" class="t t-s"><tspan class="t-b">Compartir pesos en el tiempo:</tspan> W, U y V son las mismas matrices en los cuatro pasos.</text>
+<text x="300" y="353" class="t t-s t-m">Por eso la red acepta secuencias de cualquier largo con un número fijo de parámetros.</text>
+</svg></div><figcaption><b>Una red recurrente plegada y desplegada en el tiempo.</b> A la izquierda, el bloque con su lazo: recibe la entrada x (naranja), calcula el estado h (morado) y se lo devuelve a sí mismo por la flecha W; la salida y (rosa) sale por V. A la derecha, el mismo bloque desplegado para la secuencia «3 5 , 5»: cuatro copias, una por carácter, que se pasan el estado de izquierda a derecha. Las etiquetas U, W y V se repiten: son las mismas matrices en todos los pasos.</figcaption></figure><div class="prose"><p>Según dónde se piden salidas, la misma red resuelve tareas distintas:</p><ul><li><b>Muchos a uno</b> (<i>many-to-one</i>): se lee toda la secuencia y se usa solo el último estado. Por ejemplo, decidir si un campo de fecha es válido, o clasificar el sentimiento de una reseña.</li><li><b>Muchos a muchos</b> (<i>many-to-many</i>): una salida por paso, como marcar cada carácter de un campo como dígito, separador o letra, o predecir el carácter siguiente.</li><li><b>Uno a muchos</b> (<i>one-to-many</i>): una entrada y una secuencia de salida, como escribir una descripción a partir de una foto.</li></ul><p>Una RNN también puede leer una imagen. Si cada fila de un dígito de 28 × 28 se toma como un paso, la imagen se vuelve una secuencia de 28 vectores de 28 píxeles, de arriba abajo. La red ve el trazo aparecer fila por fila, como alguien que lee el dígito con una tarjeta que va bajando, y al final decide con su último estado.</p></div><div class="practica"><div class="practica-title"><span class="tag">En la terminal</span><h3>Una red recurrente escrita a mano que lee cada dígito fila por fila</h3></div><p>Vas a programar con numpy una RNN de 64 neuronas de estado, con su pase hacia adelante y su retropropagación en el tiempo, y a entrenarla tres épocas con los 60.000 dígitos de MNIST. Entra a <code>digitos</code> y activa el entorno (los mismos <code>cd</code> y <code>activate</code> del capítulo 1); solo hace falta numpy.</p><ol class="steps"><li><span>Guarda este programa como <code>recurrente.py</code> dentro de <code>digitos</code>:</span></li></ol><div class="code-copia code-lineas"><pre tabindex="0"><code><span class="ln">"""Capítulo 07: una red recurrente simple, escrita con numpy, que lee cada dígito fila por fila (28 pasos)."""</span>
+<span class="ln">import time</span>
+<span class="ln"></span>
+<span class="ln">import numpy as np</span>
+<span class="ln"></span>
+<span class="ln">rng = np.random.default_rng(42)</span>
+<span class="ln">d = np.load("datos/mnist.npz")</span>
+<span class="ln">x_ent, y_ent = d["x_train"].astype(np.float32) / 255, d["y_train"]</span>
+<span class="ln">x_pru, y_pru = d["x_test"].astype(np.float32) / 255, d["y_test"]</span>
+<span class="ln">H, T = 64, 28                                         # 64 neuronas de estado, 28 filas = 28 pasos</span>
+<span class="ln">U = rng.normal(0, np.sqrt(1 / 28), (28, H)).astype(np.float32)   # entrada -&gt; estado</span>
+<span class="ln">W = (np.eye(H) * 0.9).astype(np.float32)                          # estado -&gt; estado (el lazo)</span>
+<span class="ln">b = np.zeros(H, np.float32)</span>
+<span class="ln">V = rng.normal(0, np.sqrt(1 / H), (H, 10)).astype(np.float32)    # último estado -&gt; 10 dígitos</span>
+<span class="ln">c = np.zeros(10, np.float32)</span>
+<span class="ln"></span>
+<span class="ln"></span>
+<span class="ln">def adelante(x):</span>
+<span class="ln">    """x: (lote, 28, 28). Devuelve los estados h_0..h_28 y las probabilidades."""</span>
+<span class="ln">    h = [np.zeros((x.shape[0], H), np.float32)]</span>
+<span class="ln">    for t in range(T):                                # el MISMO U, W y b en cada paso</span>
+<span class="ln">        h.append(np.tanh(x[:, t] @ U + h[-1] @ W + b))</span>
+<span class="ln">    z = h[-1] @ V + c</span>
+<span class="ln">    p = np.exp(z - z.max(1, keepdims=True))</span>
+<span class="ln">    return h, p / p.sum(1, keepdims=True)</span>
+<span class="ln"></span>
+<span class="ln"></span>
+<span class="ln">def exactitud(x, y):</span>
+<span class="ln">    return np.mean([(adelante(x[i:i + 2000])[1].argmax(1) == y[i:i + 2000]).mean() for i in range(0, len(x), 2000)])</span>
+<span class="ln"></span>
+<span class="ln"></span>
+<span class="ln">lr = 0.05</span>
+<span class="ln">for epoca in range(1, 4):</span>
+<span class="ln">    t0 = time.time()</span>
+<span class="ln">    orden = rng.permutation(60000)</span>
+<span class="ln">    for i in range(0, 60000, 64):</span>
+<span class="ln">        lote = orden[i:i + 64]</span>
+<span class="ln">        x, y = x_ent[lote], y_ent[lote]</span>
+<span class="ln">        h, p = adelante(x)</span>
+<span class="ln">        dz = p.copy()</span>
+<span class="ln">        dz[np.arange(len(y)), y] -= 1</span>
+<span class="ln">        dz /= len(y)</span>
+<span class="ln">        gV, gc = h[-1].T @ dz, dz.sum(0)</span>
+<span class="ln">        dh = dz @ V.T</span>
+<span class="ln">        gU, gW, gb = np.zeros_like(U), np.zeros_like(W), np.zeros_like(b)</span>
+<span class="ln">        for t in range(T, 0, -1):                     # retropropagación en el tiempo</span>
+<span class="ln">            da = dh * (1 - h[t] ** 2)                 # derivada de tanh</span>
+<span class="ln">            gU += x[:, t - 1].T @ da</span>
+<span class="ln">            gW += h[t - 1].T @ da</span>
+<span class="ln">            gb += da.sum(0)</span>
+<span class="ln">            dh = da @ W.T                             # el gradiente pasa al paso anterior</span>
+<span class="ln">        for g in (gU, gW, gb, gV, gc):                # recorte del gradiente</span>
+<span class="ln">            n = np.linalg.norm(g)</span>
+<span class="ln">            if n &gt; 1:</span>
+<span class="ln">                g *= 1 / n</span>
+<span class="ln">        for w, g in ((U, gU), (W, gW), (b, gb), (V, gV), (c, gc)):</span>
+<span class="ln">            w -= lr * g                               # descenso por gradiente</span>
+<span class="ln">    print(f"época {epoca}: prueba {exactitud(x_pru, y_pru):.2%} ({time.time() - t0:.0f} s)")</span>
+<span class="ln"></span>
+<span class="ln">print(f"Pesos: {U.size + W.size + b.size + V.size + c.size:,}".replace(",", "."))</span></code></pre><button type="button" class="ver-todo" aria-expanded="false">Ver las 60 líneas</button><button type="button" class="copiar copiar-todo">Copiar</button></div><ol class="steps" start="2" style="counter-reset:st 1"><li><span>Córrelo (tarda menos de un minuto):</span></li></ol><div class="cmds"><div class="cmd-tabs" role="tablist" aria-label="Sistema operativo"><button type="button" role="tab" data-so="win">Windows</button><button type="button" role="tab" data-so="mac linux">macOS y Linux</button></div><div class="cmd-panel" role="tabpanel" data-so="win"><div class="cmd-l"><code>python recurrente.py</code><button type="button" class="copiar">Copiar</button></div></div><div class="cmd-panel" role="tabpanel" data-so="mac linux"><div class="cmd-l"><code>python3 recurrente.py</code><button type="button" class="copiar">Copiar</button></div></div></div><ol class="steps" start="3" style="counter-reset:st 2"><li><span>Busca en el código las dos líneas que hacen recurrente a la red: la del pase hacia adelante que usa <code>h[-1]</code> y la del pase hacia atrás que calcula <code>dh = da @ W.T</code>.</span></li></ol><p><b>Qué observar:</b> la red llega al 87,5 % en la primera época, al 93,5 % en la segunda y al 94,9 % en la tercera, con 6.602 pesos, aunque nunca ve la imagen entera de una vez: solo una fila por paso y lo que guardó en su estado. Los gradientes <code>gU</code>, <code>gW</code> y <code>gb</code> se <b>suman</b> en los 28 pasos, porque los mismos pesos se usaron 28 veces. La red convolucional del capítulo 6 llega más alto, porque una imagen no es una secuencia natural; la recurrente brilla donde el orden es el dato. Las cifras pueden variar en el último decimal con otra versión de numpy.</p></div></section>
+<section><h2>Retropropagación en el tiempo</h2><div class="prose"><p>¿Cómo se entrena un bloque que se usa muchas veces? Con el mismo truco del dibujo: se <b>despliega</b> (<i>unroll</i>) la red en el tiempo. Una secuencia de 28 pasos se convierte en una red de 28 capas, una por paso, que comparten los mismos pesos. Esa red desplegada es un grafo de cómputo como los del capítulo 3, y se le aplica la retropropagación de siempre. A esa aplicación se le llama <b>retropropagación en el tiempo</b> (<i>backpropagation through time</i>, BPTT).</p></div><div class="analogia"><b>Imagínalo así</b><p>Imagina una carrera de postas donde los cuatro corredores son la misma persona, que vuelve a la largada después de cada vuelta. Si el equipo llegó tarde, para saber cuánto culpar a esa persona hay que sumar lo que perdió en cada una de las cuatro vueltas. Con un peso compartido pasa igual: su gradiente total es la suma de los gradientes de cada paso donde se usó.</p></div><div class="prose"><p>Hay dos diferencias con una red común. La primera: como <span class="math">W</span> y <span class="math">U</span> se usan en todos los pasos, su gradiente es la <b>suma</b> de las contribuciones de cada paso. La segunda: para llegar al paso <span class="math">t</span> desde el final, el gradiente atraviesa todos los pasos intermedios, y en cada uno se multiplica por <span class="math">W</span> y por la derivada de tanh. Esa cadena de multiplicaciones es la que trae problemas en la sección siguiente.</p><p>BPTT tiene también un costo práctico: para el pase hacia atrás hay que guardar el estado de cada paso, y con secuencias de miles de pasos la memoria no alcanza. La solución habitual es la <b>retropropagación truncada</b> (<i>truncated BPTT</i>): se corta la secuencia en tramos de, por ejemplo, 100 pasos; el estado sí pasa de un tramo al siguiente, pero el gradiente solo viaja hacia atrás dentro de cada tramo. Es una aproximación: la red puede usar memoria más larga, pero no recibe señal para aprenderla.</p><p>La otra limitación es de velocidad: el paso 10 necesita el estado del paso 9, así que los pasos no se pueden calcular a la vez, y una tarjeta gráfica, que gana velocidad con miles de cuentas en paralelo, queda subutilizada.</p></div></section>
+<section><h2>La memoria que se desvanece</h2><div class="prose"><p>Volvamos a la cadena de multiplicaciones. Para saber cuánto influyó en el último estado lo que la red leyó hace <span class="math">k</span> pasos, el gradiente tiene que atravesar <span class="math">k</span> veces el bloque. En cada paso se multiplica por <span class="math">W</span> y por la derivada de tanh, que nunca pasa de 1 y suele ser bastante menor. Si ese factor vale, en promedio, 0,6, después de 20 pasos queda <span class="math">0{,}6^{20} \approx 0{,}00004</span>.</p></div><div class="analogia"><b>Imagínalo así</b><p>Es el juego del teléfono descompuesto. Una frase pasa de oreja en oreja, y cada persona entiende un poco menos. Con tres personas, el mensaje llega casi entero; con veinte, no queda nada del original. Una RNN simple es una fila de veinte personas que, encima, son todas iguales: si cada una pierde el 40 % en el camino, la pérdida se compone.</p></div><div class="prose"><p>Es el <b>gradiente que se desvanece</b> (<i>vanishing gradient</i>) del capítulo 3, ahora en el tiempo: la red desplegada es muy profunda aunque tenga una sola capa. Si el factor es mayor que 1, pasa lo contrario: el gradiente crece paso a paso y <b>explota</b> (<i>exploding gradient</i>), y un solo minilote puede mandar los pesos a cualquier parte. Sepp Hochreiter lo analizó en su tesis de 1991, y Yoshua Bengio, Patrice Simard y Paolo Frasconi lo publicaron en 1994.</p><p>La explosión tiene un arreglo sencillo: el <b>recorte del gradiente</b> (<i>gradient clipping</i>). Si la norma del gradiente pasa de un límite, se lo achica hasta ese límite sin cambiarle la dirección. La práctica anterior lo hace en cuatro líneas. El desvanecimiento es más difícil, porque no hay nada que recortar: la señal simplemente no llega. Y su consecuencia es grave. La red aprende con facilidad lo que depende de los últimos pasos y casi no puede aprender lo que depende de algo lejano. Para el monto en letras de Simón, eso significa que, al llegar a «… y cinco centavos», la red ya olvidó si empezó con «mil» o con «cien».</p></div><figure class="fig fig-flujo" id="07-diagrama-2"><div class="lienzo"><svg viewBox="0 0 900 460" style="min-width:720px" role="img" aria-label="Retropropagación en el tiempo en una red simple y en una LSTM. En la red simple, el gradiente que vuelve desde la pérdida se multiplica por 0,6 en cada paso hacia atrás y se adelgaza: 1, 0,6, 0,36, 0,22, 0,13, 0,08; a 20 pasos queda en 0,00004. En la LSTM, el gradiente viaja por la celda y se multiplica por la compuerta de olvido, cercana a 0,98: 1, 0,98, 0,96, 0,94, 0,92, 0,90; a 20 pasos todavía vale 0,67">
+<defs><marker id="c7d2-f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="fl-muted"/></marker>
+<marker id="c7d2-g" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="k-fis"/></marker>
+<marker id="c7d2-h" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="k-fis"/></marker></defs>
+<text x="20" y="30" class="t t-b">RED RECURRENTE SIMPLE</text>
+<text x="20" y="48" class="t t-s t-m">cada paso hacia atrás multiplica el gradiente por W·tanh′, aquí ≈ 0,6</text>
+<rect x="40" y="88" width="80" height="46" rx="8" class="c-tra"/>
+<text x="80" y="116" class="t t-s k-tra" text-anchor="middle">h<tspan dy="3" class="t-xs">t−5</tspan></text>
+<path d="M120 111H166" class="ln" style="stroke-width:1.4" marker-end="url(#c7d2-f)"/>
+<rect x="170" y="88" width="80" height="46" rx="8" class="c-tra"/>
+<text x="210" y="116" class="t t-s k-tra" text-anchor="middle">h<tspan dy="3" class="t-xs">t−4</tspan></text>
+<path d="M250 111H296" class="ln" style="stroke-width:1.4" marker-end="url(#c7d2-f)"/>
+<rect x="300" y="88" width="80" height="46" rx="8" class="c-tra"/>
+<text x="340" y="116" class="t t-s k-tra" text-anchor="middle">h<tspan dy="3" class="t-xs">t−3</tspan></text>
+<path d="M380 111H426" class="ln" style="stroke-width:1.4" marker-end="url(#c7d2-f)"/>
+<rect x="430" y="88" width="80" height="46" rx="8" class="c-tra"/>
+<text x="470" y="116" class="t t-s k-tra" text-anchor="middle">h<tspan dy="3" class="t-xs">t−2</tspan></text>
+<path d="M510 111H556" class="ln" style="stroke-width:1.4" marker-end="url(#c7d2-f)"/>
+<rect x="560" y="88" width="80" height="46" rx="8" class="c-tra"/>
+<text x="600" y="116" class="t t-s k-tra" text-anchor="middle">h<tspan dy="3" class="t-xs">t−1</tspan></text>
+<path d="M640 111H686" class="ln" style="stroke-width:1.4" marker-end="url(#c7d2-f)"/>
+<rect x="690" y="88" width="80" height="46" rx="8" class="c-tra"/>
+<text x="730" y="116" class="t t-s k-tra" text-anchor="middle">h<tspan dy="3" class="t-xs">t</tspan></text>
+<rect x="786" y="92" width="64" height="38" rx="8" class="c-apl"/>
+<text x="818" y="116" class="t t-s t-b k-apl" text-anchor="middle">pérdida</text>
+<path d="M770 111H782" class="ln" style="stroke-width:1.4" marker-end="url(#c7d2-f)"/>
+<path d="M200 162H92" class="ln s-fis" style="stroke-width:0.8;stroke-dasharray:6 3" marker-end="url(#c7d2-g)"/>
+<text x="80" y="188" class="t t-s t-mono k-fis" text-anchor="middle">0,08</text>
+<path d="M330 162H222" class="ln s-fis" style="stroke-width:0.9;stroke-dasharray:6 3" marker-end="url(#c7d2-g)"/>
+<text x="210" y="188" class="t t-s t-mono k-fis" text-anchor="middle">0,13</text>
+<path d="M460 162H352" class="ln s-fis" style="stroke-width:1.5;stroke-dasharray:6 3" marker-end="url(#c7d2-g)"/>
+<text x="340" y="188" class="t t-s t-mono k-fis" text-anchor="middle">0,22</text>
+<path d="M590 162H482" class="ln s-fis" style="stroke-width:2.5;stroke-dasharray:6 3" marker-end="url(#c7d2-g)"/>
+<text x="470" y="188" class="t t-s t-mono k-fis" text-anchor="middle">0,36</text>
+<path d="M720 162H612" class="ln s-fis" style="stroke-width:4.2;stroke-dasharray:6 3" marker-end="url(#c7d2-g)"/>
+<text x="600" y="188" class="t t-s t-mono k-fis" text-anchor="middle">0,60</text>
+<text x="730" y="188" class="t t-s t-mono k-fis" text-anchor="middle">1,00</text>
+<path d="M818 130V162H762" class="ln s-fis" style="stroke-width:7" marker-end="url(#c7d2-g)"/>
+<text x="826" y="156" class="t t-xs k-fis">GRADIENTE</text>
+<text x="20" y="214" class="t t-s"><tspan class="t-b">A 20 pasos:</tspan> 0,6²⁰ ≈ 0,00004. Lo que pasó hace 20 caracteres casi no cambia los pesos.</text>
+<g transform="translate(0,28)">
+<text x="20" y="230" class="t t-b">LSTM</text>
+<text x="20" y="248" class="t t-s t-m">por la celda, el gradiente solo se multiplica por la compuerta de olvido, aquí ≈ 0,98</text>
+<path d="M30 278H790" class="ln s-tra" style="stroke-width:3"/>
+<text x="794" y="282" class="t t-xs k-tra">CELDA c</text>
+<rect x="40" y="288" width="80" height="46" rx="8" class="c-tra"/>
+<text x="80" y="316" class="t t-s k-tra" text-anchor="middle">h<tspan dy="3" class="t-xs">t−5</tspan></text>
+<path d="M120 311H166" class="ln" style="stroke-width:1.4" marker-end="url(#c7d2-f)"/>
+<text x="145" y="272" class="t t-xs t-mono k-tra" text-anchor="middle">×f</text>
+<rect x="170" y="288" width="80" height="46" rx="8" class="c-tra"/>
+<text x="210" y="316" class="t t-s k-tra" text-anchor="middle">h<tspan dy="3" class="t-xs">t−4</tspan></text>
+<path d="M250 311H296" class="ln" style="stroke-width:1.4" marker-end="url(#c7d2-f)"/>
+<text x="275" y="272" class="t t-xs t-mono k-tra" text-anchor="middle">×f</text>
+<rect x="300" y="288" width="80" height="46" rx="8" class="c-tra"/>
+<text x="340" y="316" class="t t-s k-tra" text-anchor="middle">h<tspan dy="3" class="t-xs">t−3</tspan></text>
+<path d="M380 311H426" class="ln" style="stroke-width:1.4" marker-end="url(#c7d2-f)"/>
+<text x="405" y="272" class="t t-xs t-mono k-tra" text-anchor="middle">×f</text>
+<rect x="430" y="288" width="80" height="46" rx="8" class="c-tra"/>
+<text x="470" y="316" class="t t-s k-tra" text-anchor="middle">h<tspan dy="3" class="t-xs">t−2</tspan></text>
+<path d="M510 311H556" class="ln" style="stroke-width:1.4" marker-end="url(#c7d2-f)"/>
+<text x="535" y="272" class="t t-xs t-mono k-tra" text-anchor="middle">×f</text>
+<rect x="560" y="288" width="80" height="46" rx="8" class="c-tra"/>
+<text x="600" y="316" class="t t-s k-tra" text-anchor="middle">h<tspan dy="3" class="t-xs">t−1</tspan></text>
+<path d="M640 311H686" class="ln" style="stroke-width:1.4" marker-end="url(#c7d2-f)"/>
+<text x="665" y="272" class="t t-xs t-mono k-tra" text-anchor="middle">×f</text>
+<rect x="690" y="288" width="80" height="46" rx="8" class="c-tra"/>
+<text x="730" y="316" class="t t-s k-tra" text-anchor="middle">h<tspan dy="3" class="t-xs">t</tspan></text>
+<rect x="786" y="292" width="64" height="38" rx="8" class="c-apl"/>
+<text x="818" y="316" class="t t-s t-b k-apl" text-anchor="middle">pérdida</text>
+<path d="M770 311H782" class="ln" style="stroke-width:1.4" marker-end="url(#c7d2-f)"/>
+<path d="M200 362H92" class="ln s-fis" style="stroke-width:6.3;stroke-dasharray:6 3" marker-end="url(#c7d2-h)"/>
+<text x="80" y="388" class="t t-s t-mono k-fis" text-anchor="middle">0,90</text>
+<path d="M330 362H222" class="ln s-fis" style="stroke-width:6.5;stroke-dasharray:6 3" marker-end="url(#c7d2-h)"/>
+<text x="210" y="388" class="t t-s t-mono k-fis" text-anchor="middle">0,92</text>
+<path d="M460 362H352" class="ln s-fis" style="stroke-width:6.6;stroke-dasharray:6 3" marker-end="url(#c7d2-h)"/>
+<text x="340" y="388" class="t t-s t-mono k-fis" text-anchor="middle">0,94</text>
+<path d="M590 362H482" class="ln s-fis" style="stroke-width:6.7;stroke-dasharray:6 3" marker-end="url(#c7d2-h)"/>
+<text x="470" y="388" class="t t-s t-mono k-fis" text-anchor="middle">0,96</text>
+<path d="M720 362H612" class="ln s-fis" style="stroke-width:6.9;stroke-dasharray:6 3" marker-end="url(#c7d2-h)"/>
+<text x="600" y="388" class="t t-s t-mono k-fis" text-anchor="middle">0,98</text>
+<text x="730" y="388" class="t t-s t-mono k-fis" text-anchor="middle">1,00</text>
+<path d="M818 330V362H762" class="ln s-fis" style="stroke-width:7" marker-end="url(#c7d2-h)"/>
+<text x="826" y="356" class="t t-xs k-fis">GRADIENTE</text>
+<text x="20" y="414" class="t t-s"><tspan class="t-b">A 20 pasos:</tspan> 0,98²⁰ ≈ 0,67. La celda es una autopista con pocos peajes.</text>
+</g>
+</svg></div><figcaption><b>Retropropagación en el tiempo en una red simple y en una LSTM.</b> Arriba, la red simple: el pase hacia adelante va de izquierda a derecha hasta la pérdida (rosa), y el gradiente (ámbar, punteado) vuelve de derecha a izquierda. En cada paso se multiplica por 0,6 y la flecha se adelgaza: 1, 0,6, 0,36, 0,22, 0,13, 0,08. Abajo, la LSTM: el gradiente viaja por la línea de la celda y en cada paso solo se multiplica por la compuerta de olvido, cercana a 0,98, y casi no se adelgaza. Las cuentas al pie dan el resultado a 20 pasos.</figcaption></figure><div class="lab" id="07-lab-1"><div class="lab-title"><span class="tag">Laboratorio</span><h3>La memoria que se desvanece: cuánto recuerda una red recurrente simple y una LSTM de lo que vio hace 5, 20 y 50 pasos</h3></div><p class="hint">Dos redes de 16 neuronas leen las mismas secuencias de 60 pasos de ruido. La curva mide, con retropropagación en el tiempo de verdad, cuánto cambia el último estado si cambia lo que la red leyó hace k pasos. Empieza con los valores iniciales y mira las tarjetas de 5, 20 y 50 pasos. Después sube el sesgo de la compuerta de olvido de la LSTM, y por último lleva la escala de la red simple por encima de 1.</p><style>
+[id="07-lab-1"] .c7l1-rot{font:700 .7rem var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+[id="07-lab-1"] canvas{width:100%;border:1px solid var(--line);border-radius:6px;background:var(--card)}
+[id="07-lab-1"] .c7l1-tarjetas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+[id="07-lab-1"] .c7l1-t{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--paper);display:grid;gap:4px;min-width:0}
+[id="07-lab-1"] .c7l1-t b{font:700 .78rem var(--f-display);color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+[id="07-lab-1"] .c7l1-fila{display:flex;justify-content:space-between;gap:6px;font:600 .86rem var(--f-mono)}
+[id="07-lab-1"] .c7l1-r{color:var(--warm)} [id="07-lab-1"] .c7l1-l{color:var(--c-tra)}
+[id="07-lab-1"] .c7l1-v{font-weight:700}
+[id="07-lab-1"] .c7l1-ok{color:var(--good)} [id="07-lab-1"] .c7l1-no{color:var(--muted)}
+@media (max-width:560px){[id="07-lab-1"] .c7l1-tarjetas{grid-template-columns:minmax(0,1fr)}}
+</style>
+<div class="ctls">
+  <label class="ctl">Escala de los pesos recurrentes de la red simple <output id="c7l1-rho-o"></output>
+    <input id="c7l1-rho" type="range" min="0.5" max="1.5" step="0.05" value="0.9"></label>
+  <label class="ctl">Sesgo de la compuerta de olvido de la LSTM <output id="c7l1-bf-o"></output>
+    <input id="c7l1-bf" type="range" min="-2" max="5" step="0.5" value="0"></label>
+</div>
+<div class="btns" role="group" aria-label="Semilla de los pesos">
+  <button type="button" id="c7l1-otra" aria-pressed="false">Otros pesos al azar</button>
+  <button type="button" id="c7l1-rec" aria-pressed="false">Valores recomendados</button>
+</div>
+<span class="c7l1-rot">Cuánto influye en el último paso lo que la red leyó hace k pasos (escala logarítmica)</span>
+<canvas id="c7l1-cv" role="img" aria-label="Curvas de la influencia del dato leído hace k pasos sobre el estado final, para la red recurrente simple y para la LSTM, en escala logarítmica, con marcas en 5, 20 y 50 pasos"></canvas>
+<div class="legend"><span><b class="c7l1-r">—</b> red recurrente simple (tanh)</span><span><b class="c7l1-l">—</b> LSTM</span><span>línea punteada: umbral de «ya no recuerda» (1 % de la influencia del paso anterior)</span></div>
+<div class="c7l1-tarjetas" id="c7l1-tj"></div>
+<div class="readout texto" id="c7l1-out" aria-live="polite"></div></div><div class="prose"><p>En el laboratorio se ven tres cosas. La red simple, con su escala por debajo de 1, recuerda lo de hace 5 pasos y olvida lo de hace 20: su curva cae en línea recta en la escala logarítmica, que es la firma de una multiplicación repetida. Si la escala pasa de 1, la curva deja de caer y hasta sube: es el gradiente que explota, y la red se vuelve inestable. Y la LSTM con su compuerta de olvido cerrada olvida igual que la red simple; con la compuerta abierta, la curva se aplana y la señal de hace 50 pasos sigue viva. La arquitectura sola no basta: importa que la compuerta empiece abierta.</p></div><div class="practica"><div class="practica-title"><span class="tag">En la terminal</span><h3>El gradiente que llega desde 5, 20 y 50 pasos atrás, medido con PyTorch</h3></div><p>Vas a pedirle a PyTorch que haga la retropropagación en el tiempo por ti y a medir cuánto gradiente llega a cada paso de una secuencia de 60, en una red simple y en dos LSTM. Necesitas PyTorch, instalado en la práctica del capítulo 6. Entra a <code>digitos</code> y activa el entorno.</p><ol class="steps"><li><span>Guarda este programa como <code>memoria.py</code>:</span></li></ol><div class="code-copia code-lineas"><pre tabindex="0"><code><span class="ln">"""Capítulo 07: cuánto influye en el último estado lo que la red leyó hace k pasos.</span>
+<span class="ln">Mide el gradiente del último estado con respecto a cada entrada (retropropagación en el tiempo, con autograd)."""</span>
+<span class="ln">import torch</span>
+<span class="ln">from torch import nn</span>
+<span class="ln"></span>
+<span class="ln">torch.manual_seed(42)</span>
+<span class="ln">x = (torch.randn(200, 60, 1) * 0.5).requires_grad_(True)   # 200 secuencias de 60 pasos de ruido</span>
+<span class="ln"></span>
+<span class="ln">redes = {</span>
+<span class="ln">    "red simple (tanh)": nn.RNN(1, 32, batch_first=True),</span>
+<span class="ln">    "LSTM, sesgo de olvido 0": nn.LSTM(1, 32, batch_first=True),</span>
+<span class="ln">    "LSTM, sesgo de olvido 3": nn.LSTM(1, 32, batch_first=True),</span>
+<span class="ln">}</span>
+<span class="ln">with torch.no_grad():                           # PyTorch ordena las compuertas: entrada, olvido, candidato, salida</span>
+<span class="ln">    redes["LSTM, sesgo de olvido 0"].bias_ih_l0[32:64] = 0.0</span>
+<span class="ln">    redes["LSTM, sesgo de olvido 0"].bias_hh_l0[32:64] = 0.0</span>
+<span class="ln">    redes["LSTM, sesgo de olvido 3"].bias_ih_l0[32:64] = 3.0</span>
+<span class="ln">    redes["LSTM, sesgo de olvido 3"].bias_hh_l0[32:64] = 0.0</span>
+<span class="ln"></span>
+<span class="ln">print(f"{'':26}{'hace 1':&gt;10}{'hace 5':&gt;10}{'hace 20':&gt;10}{'hace 50':&gt;10}")</span>
+<span class="ln">for nombre, red in redes.items():</span>
+<span class="ln">    x.grad = None</span>
+<span class="ln">    estados, _ = red(x)</span>
+<span class="ln">    estados[:, -1].sum().backward()             # el gradiente viaja hacia atrás por los 60 pasos</span>
+<span class="ln">    g = x.grad.abs().mean(0)[:, 0]              # tamaño promedio del gradiente en cada paso</span>
+<span class="ln">    print(f"{nombre:26}" + "".join(f"{g[60 - k].item():10.1e}" for k in (1, 5, 20, 50)))</span></code></pre><button type="button" class="ver-todo" aria-expanded="false">Ver las 26 líneas</button><button type="button" class="copiar copiar-todo">Copiar</button></div><ol class="steps" start="2" style="counter-reset:st 1"><li><span>Córrelo (tarda unos segundos):</span></li></ol><div class="cmds"><div class="cmd-tabs" role="tablist" aria-label="Sistema operativo"><button type="button" role="tab" data-so="win">Windows</button><button type="button" role="tab" data-so="mac linux">macOS y Linux</button></div><div class="cmd-panel" role="tabpanel" data-so="win"><div class="cmd-l"><code>python memoria.py</code><button type="button" class="copiar">Copiar</button></div></div><div class="cmd-panel" role="tabpanel" data-so="mac linux"><div class="cmd-l"><code>python3 memoria.py</code><button type="button" class="copiar">Copiar</button></div></div></div><ol class="steps" start="3" style="counter-reset:st 2"><li><span>Cambia el <code>3.0</code> por <code>1.0</code> y vuelve a correrlo.</span></li></ol><p><b>Qué observar:</b> la tabla usa notación científica: <code>4.7e-06</code> significa 0,0000047. En la red simple, el gradiente que llega desde 5 pasos atrás es parecido al del último (alrededor de 0,03), desde 20 pasos es cuatro mil veces menor y desde 50 es prácticamente cero (del orden de 10⁻¹²). La LSTM con sesgo de olvido 0 se comporta igual. Con sesgo 3, el gradiente desde 50 pasos todavía es del orden de 0,02: la señal llega viva. Con sesgo 1 queda en medio. Las redes no están entrenadas: esto mide qué tan bien puede viajar la señal antes de aprender nada, que es justo lo que decide si el entrenamiento podrá descubrir una dependencia lejana. Las cifras pueden cambiar un poco con otra versión de PyTorch.</p></div></section>
+<section><h2>LSTM y GRU: compuertas que deciden qué recordar</h2><div class="prose"><p>En 1997, Sepp Hochreiter y Jürgen Schmidhuber propusieron la <b>LSTM</b> (<i>Long Short-Term Memory</i>, memoria larga de corto plazo). La idea es separar dos cosas que la red simple mezcla: el estado que la red muestra hacia afuera, <span class="math">h_t</span>, y una <b>celda de memoria</b> (<i>cell state</i>), <span class="math">c_t</span>, que corre por su propio carril. Lo que entra y sale de la celda lo controlan <b>compuertas</b> (<i>gates</i>).</p></div><div class="analogia"><b>Imagínalo así</b><p>Piensa en una cinta transportadora que cruza una fábrica de punta a punta, con tres operarios a su lado. El primero decide qué cajas sacar de la cinta y tirar. El segundo decide qué cajas nuevas subir. El tercero decide qué parte de lo que va en la cinta se muestra en la vitrina de la salida. Si nadie toca nada, la cinta lleva su carga intacta de un extremo al otro. Esa cinta es la celda; los operarios son las compuertas.</p></div><div class="prose"><p>Una compuerta es una capa con activación <b>sigmoide</b>, que da números entre 0 y 1, multiplicada elemento a elemento por lo que controla: 1 deja pasar todo, 0 no deja pasar nada, 0,5 deja pasar la mitad. Cada compuerta mira la entrada <span class="math">x_t</span> y el estado anterior <span class="math">h_{t-1}</span> con sus propios pesos. Son tres, más un candidato:</p><ul><li><b>Compuerta de olvido</b> (<i>forget gate</i>) <span class="math">f_t</span>: cuánto conservar de cada número de la celda anterior.</li><li><b>Compuerta de entrada</b> (<i>input gate</i>) <span class="math">i_t</span>: cuánto escribir de lo nuevo.</li><li><b>Candidato</b> (<i>candidate</i>) <span class="math">g_t</span>: lo nuevo que se podría escribir, con activación tanh, entre −1 y 1.</li><li><b>Compuerta de salida</b> (<i>output gate</i>) <span class="math">o_t</span>: cuánto de la celda mostrar en el estado <span class="math">h_t</span>.</li></ul><p>Con ellas, la celda y el estado se actualizan así:</p><div class="math-display">c_t = f_t \cdot c_{t-1} + i_t \cdot g_t \qquad h_t = o_t \cdot \tanh(c_t)</div><p>La primera ecuación es la clave. La celda nueva es la vieja, multiplicada por la compuerta de olvido, <b>más</b> lo nuevo. No pasa por ninguna matriz ni por ninguna tanh. En el pase hacia atrás, el gradiente que viaja por la celda solo se multiplica por <span class="math">f_t</span> en cada paso. Si la red mantiene <span class="math">f_t</span> cerca de 1, el gradiente atraviesa decenas de pasos casi sin achicarse. Es la misma idea del atajo de ResNet del capítulo 6, quince años antes y en el tiempo: un camino aditivo por donde la señal pasa intacta. La compuerta de olvido no estaba en la versión de 1997; la agregaron Felix Gers, Jürgen Schmidhuber y Fred Cummins en 2000, y hoy es parte de toda LSTM.</p></div><figure class="fig fig-esquema" id="07-diagrama-3"><div class="lienzo"><svg viewBox="0 0 900 430" style="min-width:720px" role="img" aria-label="La celda de una LSTM por dentro. Arriba corre la celda de memoria c, de izquierda a derecha, con dos operaciones: una multiplicación por la compuerta de olvido f y una suma de lo que deja pasar la compuerta de entrada i por el candidato g. Abajo, la entrada x sub t y el estado anterior h sub t menos 1 alimentan las cuatro compuertas: tres sigmoides, f, i y o, y una tangente hiperbólica, g. A la derecha, la salida h sub t es o por la tangente hiperbólica de c sub t">
+<defs>
+<marker id="c7d3-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="k-tra"/></marker>
+<marker id="c7d3-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="fl-muted"/></marker>
+<marker id="c7d3-c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="k-tra"/></marker>
+</defs>
+<rect x="150" y="40" width="560" height="320" rx="16" class="caja" style="stroke-dasharray:6 4"/>
+<text x="166" y="62" class="t t-xs t-m">UNA CELDA LSTM (UN PASO DE TIEMPO)</text>
+
+<path d="M30 100H850" class="ln s-tra" style="stroke-width:4" marker-end="url(#c7d3-c)"/>
+<text x="30" y="88" class="t t-b k-tra">c<tspan dy="3" class="t-xs">t−1</tspan></text>
+<text x="810" y="88" class="t t-b k-tra">c<tspan dy="3" class="t-xs">t</tspan></text>
+<text x="430" y="30" class="t t-s k-tra" text-anchor="middle">la celda: c<tspan dy="3" class="t-xs">t</tspan><tspan dy="-3"> = f · c</tspan><tspan dy="3" class="t-xs">t−1</tspan><tspan dy="-3"> + i · g</tspan></text>
+<circle cx="290" cy="100" r="16" class="c-tra"/><text x="290" y="106" class="t t-b k-tra" text-anchor="middle">×</text>
+<circle cx="470" cy="100" r="16" class="c-tra"/><text x="470" y="106" class="t t-b k-tra" text-anchor="middle">+</text>
+
+<path d="M30 330H640" class="ln" style="stroke-width:2"/>
+<text x="30" y="352" class="t t-b">h<tspan dy="3" class="t-xs">t−1</tspan></text>
+<text x="30" y="406" class="t t-b k-sis">x<tspan dy="3" class="t-xs">t</tspan></text>
+<path d="M62 398C110 398 110 330 140 330" class="ln" style="stroke:var(--d-sis);stroke-width:2"/>
+<text x="76" y="318" class="t t-xs t-m">[h, x]</text>
+
+<rect x="248" y="226" width="84" height="58" rx="8" class="c-tra"/><text x="290" y="250" class="t t-b k-tra" text-anchor="middle">σ</text>
+<text x="290" y="274" class="t t-xs k-tra" text-anchor="middle">OLVIDO f</text>
+<rect x="368" y="226" width="84" height="58" rx="8" class="c-tra"/><text x="410" y="250" class="t t-b k-tra" text-anchor="middle">σ</text>
+<text x="410" y="274" class="t t-xs k-tra" text-anchor="middle">ENTRADA i</text>
+<rect x="488" y="226" width="84" height="58" rx="8" class="c-tra"/><text x="530" y="250" class="t t-s t-b k-tra" text-anchor="middle">tanh</text>
+<text x="530" y="274" class="t t-xs k-tra" text-anchor="middle">CANDIDATO g</text>
+<rect x="598" y="226" width="84" height="58" rx="8" class="c-tra"/><text x="640" y="250" class="t t-b k-tra" text-anchor="middle">σ</text>
+<text x="640" y="274" class="t t-xs k-tra" text-anchor="middle">SALIDA o</text>
+<path d="M290 330V288" class="ln" style="stroke-width:1.6" marker-end="url(#c7d3-b)"/>
+<path d="M410 330V288" class="ln" style="stroke-width:1.6" marker-end="url(#c7d3-b)"/>
+<path d="M530 330V288" class="ln" style="stroke-width:1.6" marker-end="url(#c7d3-b)"/>
+<path d="M640 330V288" class="ln" style="stroke-width:1.6" marker-end="url(#c7d3-b)"/>
+
+<path d="M290 230V120" class="ln s-tra" style="stroke-width:2" marker-end="url(#c7d3-c)"/>
+
+<circle cx="470" cy="180" r="14" class="c-tra"/><text x="470" y="186" class="t t-b k-tra" text-anchor="middle">×</text>
+<path d="M410 230V200Q410 180 452 180" class="ln s-tra" style="stroke-width:2" marker-end="url(#c7d3-c)"/>
+<path d="M530 230V200Q530 180 488 180" class="ln" style="stroke:var(--d-sis);stroke-width:2" marker-end="url(#c7d3-c)"/>
+<path d="M470 166V120" class="ln s-tra" style="stroke-width:2" marker-end="url(#c7d3-c)"/>
+
+<path d="M740 100V150" class="ln s-tra" style="stroke-width:2" marker-end="url(#c7d3-c)"/>
+<rect x="712" y="154" width="56" height="34" rx="8" class="c-tra"/><text x="740" y="176" class="t t-s t-b k-tra" text-anchor="middle">tanh</text>
+<circle cx="740" cy="240" r="14" class="c-tra"/><text x="740" y="246" class="t t-b k-tra" text-anchor="middle">×</text>
+<path d="M740 188V222" class="ln s-tra" style="stroke-width:2" marker-end="url(#c7d3-c)"/>
+<path d="M682 252H722" class="ln s-tra" style="stroke-width:2" marker-end="url(#c7d3-c)"/>
+<path d="M740 254V330H850" class="ln" style="stroke-width:2.4" marker-end="url(#c7d3-b)"/>
+<text x="800" y="352" class="t t-b">h<tspan dy="3" class="t-xs">t</tspan></text>
+<text x="776" y="290" class="t t-s">h<tspan dy="3" class="t-xs">t</tspan><tspan dy="-3"> = o · tanh(c</tspan><tspan dy="3" class="t-xs">t</tspan><tspan dy="-3">)</tspan></text>
+
+<text x="184" y="160" class="t t-s t-m" text-anchor="middle">f ≈ 1: conserva</text>
+<text x="184" y="176" class="t t-s t-m" text-anchor="middle">f ≈ 0: borra</text>
+<text x="590" y="160" class="t t-s t-m" text-anchor="middle">i ≈ 1: escribe g</text>
+<text x="590" y="176" class="t t-s t-m" text-anchor="middle">i ≈ 0: no toca</text>
+<text x="170" y="400" class="t t-s">σ da números entre 0 y 1: cada compuerta es una llave que deja pasar una fracción.</text>
+<text x="170" y="418" class="t t-s t-m">Cada compuerta tiene sus propios pesos sobre [h, x]: una LSTM tiene cuatro veces los pesos de una red simple.</text>
+</svg></div><figcaption><b>La celda de una LSTM por dentro.</b> Arriba corre la celda c, de izquierda a derecha, como una línea gruesa: primero se multiplica por la compuerta de olvido f, después se le suma lo que deja pasar la compuerta de entrada i multiplicada por el candidato g. Abajo, el estado anterior h y la entrada x (naranja) se juntan y alimentan las cuatro compuertas, cada una con sus pesos. A la derecha, la salida h es la compuerta o por la tanh de la celda. Las notas al costado dicen qué significa que cada compuerta valga 0 o 1.</figcaption></figure><div class="prose"><p>Como cada compuerta tiene sus pesos sobre <span class="math">[h_{t-1}, x_t]</span>, una LSTM tiene cuatro veces los pesos de una RNN simple del mismo tamaño. Un consejo práctico que viene de la sección anterior y del laboratorio: iniciar el sesgo de la compuerta de olvido en un valor positivo, como 1, para que al empezar la red recuerde por defecto. Rafal Jozefowicz, Wojciech Zaremba e Ilya Sutskever mostraron en 2015 que ese detalle mejora mucho los resultados.</p><p>En 2014, Kyunghyun Cho y su equipo propusieron una versión más liviana, la <b>GRU</b> (<i>Gated Recurrent Unit</i>, unidad recurrente con compuertas). No tiene celda aparte: usa una <b>compuerta de actualización</b> (<i>update gate</i>), que decide qué fracción del estado viejo reemplazar por uno nuevo, y una <b>compuerta de reinicio</b> (<i>reset gate</i>), que decide cuánto del estado viejo mirar al calcular el nuevo. Tiene tres conjuntos de pesos en vez de cuatro y, en muchas tareas, rinde parecido a la LSTM.</p></div><div class="lab" id="07-lab-2"><div class="lab-title"><span class="tag">Laboratorio</span><h3>Las compuertas de una LSTM, abiertas y cerradas, mientras lee una frase</h3></div><p class="hint">Una LSTM de tres celdas lee una frase de formulario carácter por carácter. Sus pesos están puestos a mano para que cada celda haga algo legible: la A recuerda si hay un paréntesis abierto, la B cuenta dígitos seguidos y la C recuerda que vio una coma decimal. Elige una celda y pulsa «Leer letra por letra»; toca cualquier carácter para ver la cuenta de ese paso. Prueba la frase con paréntesis anidados y escribe la tuya.</p><style>
+[id="07-lab-2"] .c7l2-rot{font:700 .7rem var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+[id="07-lab-2"] .c7l2-texto{width:100%;font:500 .95rem var(--f-mono);padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink);box-sizing:border-box}
+[id="07-lab-2"] .c7l2-tira{display:grid;gap:10px;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--paper)}
+[id="07-lab-2"] .c7l2-fila{display:flex;gap:2px}
+[id="07-lab-2"] .c7l2-ley{display:grid;grid-template-rows:repeat(7,18px);gap:2px;margin-right:6px;width:58px;flex:none;white-space:nowrap;font:700 .6rem var(--f-display);color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+[id="07-lab-2"] .c7l2-ley span{display:flex;align-items:center;justify-content:flex-end}
+[id="07-lab-2"] .c7l2-col{display:grid;grid-template-rows:repeat(7,18px);gap:2px;width:20px;cursor:pointer;border-radius:4px}
+[id="07-lab-2"] .c7l2-col:focus-visible{outline:2px solid var(--accent)}
+[id="07-lab-2"] .c7l2-col.sel{box-shadow:0 0 0 2px var(--ink)}
+[id="07-lab-2"] .c7l2-col.fut{opacity:.25}
+[id="07-lab-2"] .c7l2-ch{font:700 .85rem var(--f-mono);display:flex;align-items:center;justify-content:center;color:var(--ink);background:var(--card);border-radius:3px}
+[id="07-lab-2"] .c7l2-q{border-radius:3px}
+[id="07-lab-2"] .c7l2-det{font:.84rem/1.5 var(--f-mono);background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:8px 10px;margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+</style>
+<div class="opciones">
+  <label>Frase que lee la LSTM
+    <select id="c7l2-frase"></select></label>
+  <label>O escribe la tuya (hasta 48 caracteres)
+    <input id="c7l2-propia" class="c7l2-texto" type="text" maxlength="48" spellcheck="false" autocomplete="off"></label>
+</div>
+<div class="btns" role="group" aria-label="Celda de memoria que se muestra">
+  <button type="button" data-c="0" aria-pressed="true">Celda A: ¿paréntesis abierto?</button>
+  <button type="button" data-c="1" aria-pressed="false">Celda B: dígitos seguidos</button>
+  <button type="button" data-c="2" aria-pressed="false">Celda C: ¿parte decimal?</button>
+</div>
+<div class="btns" role="group" aria-label="Lectura paso a paso">
+  <button type="button" id="c7l2-leer" aria-pressed="false">Leer letra por letra</button>
+  <button type="button" id="c7l2-ant" aria-pressed="false">◀ Anterior</button>
+  <button type="button" id="c7l2-sig" aria-pressed="false">Siguiente ▶</button>
+  <button type="button" id="c7l2-todo" aria-pressed="false">Ver la frase entera</button>
+</div>
+<span class="c7l2-rot">Las compuertas en cada carácter (más intenso = más abierta; en c y h, azul positivo y rojo negativo)</span>
+<div class="c7l2-tira" id="c7l2-tira"></div>
+<pre class="c7l2-det" id="c7l2-det" aria-live="polite"></pre>
+<div class="readout texto" id="c7l2-out" aria-live="polite"></div></div><div class="prose"><p>El laboratorio muestra los tres trabajos de las compuertas. La celda A abre la entrada al ver «(» y cierra el olvido al ver «)»: entre los dos, la celda guarda un 1 sin que nadie lo toque, por largo que sea el paréntesis. La celda B acumula un cuarto por dígito, y su salida tanh se satura: distingue uno, dos y tres dígitos, pero no ocho de nueve. La celda C muestra para qué sirve la compuerta de salida: guarda «vi una coma» desde que la lee, pero solo lo «dice» cuando llega un dígito, que es cuando le importa al resto de la red. Con paréntesis anidados, la celda A falla: una sola celda no sabe contar niveles. En una LSTM entrenada nadie pone los pesos, y la mayoría de las celdas no se leen tan fácil. Pero algunas sí: en 2015, Andrej Karpathy, Justin Johnson y Li Fei-Fei encontraron, en LSTM entrenadas con texto, celdas que seguían si el texto estaba dentro de unas comillas o cuántos caracteres llevaba la línea.</p></div><div class="caso"><b>Un caso real</b><p>Entre 2014 y 2017, las LSTM llegaron a productos que usaban cientos de millones de personas. En 2015, Google pasó el reconocimiento de voz de su buscador a redes LSTM y contó en su blog de investigación que el sistema nuevo era más preciso y más rápido. En 2016 presentó un traductor neuronal basado en LSTM de ocho capas para el codificador y ocho para el decodificador, que reemplazó a su sistema de traducción por frases y redujo los errores de traducción en un 55 % a 85 % en varios pares de idiomas, según sus propias evaluaciones con personas. El teclado predictivo de muchos teléfonos también usó LSTM en esos años.</p></div></section>
+<section><h2>Secuencia a secuencia y el cuello de botella del vector fijo</h2><div class="prose"><p>Traducir, resumir o convertir «mil doscientos cincuenta» en «1250» son tareas donde la entrada y la salida son secuencias de largos distintos. En 2014, Ilya Sutskever, Oriol Vinyals y Quoc Le, y en paralelo el equipo de Cho, propusieron la arquitectura <b>secuencia a secuencia</b> (<i>sequence-to-sequence</i>, seq2seq), con dos redes recurrentes:</p><ul><li>El <b>codificador</b> (<i>encoder</i>) lee toda la entrada, palabra por palabra, y su último estado queda como un resumen de la frase: un vector de tamaño fijo, por ejemplo de 256 o 1.000 números.</li><li>El <b>decodificador</b> (<i>decoder</i>) parte de ese vector y escribe la salida de a un símbolo por vez. En cada paso, el símbolo que acaba de escribir entra como entrada del paso siguiente, hasta que escribe una marca de «fin».</li></ul></div><div class="analogia"><b>Imagínalo así</b><p>Es como un intérprete que escucha un discurso entero sin tomar notas y después lo repite en otro idioma. Con un saludo de dos frases, lo hace perfecto. Con un discurso de veinte minutos, recuerda bien el final y mal el principio, por mucha memoria que tenga: todo tuvo que pasar por su cabeza en un solo resumen.</p></div><div class="prose"><p>El sistema funcionó sorprendentemente bien para frases cortas. Sutskever y sus colegas encontraron, además, un truco curioso: invertir el orden de la frase de entrada mejoraba los resultados, porque dejaba las primeras palabras de la entrada cerca de las primeras de la salida. Que ese truco ayudara era un síntoma. Todo lo que el decodificador sabe de la entrada tiene que pasar por <b>un solo vector de tamaño fijo</b>, el mismo para una frase de 4 palabras que para una de 40. Ese vector es un <b>cuello de botella</b> (<i>bottleneck</i>): con frases largas, la calidad caía, y lo primero que se perdía era el principio.</p></div><figure class="fig fig-flujo" id="07-diagrama-4"><div class="lienzo"><svg viewBox="0 0 900 400" style="min-width:740px" role="img" aria-label="Secuencia a secuencia con un codificador y un decodificador. El codificador, una red recurrente, lee las palabras mil, doscientos, cincuenta y pesos; todo lo que leyó queda resumido en un único vector de tamaño fijo, el cuello de botella. El decodificador, otra red recurrente, parte de ese vector y escribe 1, 2, 5, 0 y fin, cada salida alimentando el paso siguiente. Abajo, en punteado, la idea de la atención: que el decodificador mire en cada paso todos los estados del codificador, no solo el último">
+<defs><marker id="c7d4-m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="k-tra"/></marker>
+<marker id="c7d4-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="fl-muted"/></marker></defs>
+<text x="20" y="30" class="t t-b k-tra">CODIFICADOR (encoder)</text><text x="20" y="48" class="t t-s t-m">lee la frase entera</text>
+<text x="520" y="30" class="t t-b k-tra">DECODIFICADOR (decoder)</text><text x="520" y="48" class="t t-s t-m">escribe la respuesta, un símbolo por paso</text>
+<rect x="20" y="120" width="76" height="50" rx="8" class="c-tra"/><text x="58" y="150" class="t t-s k-tra" text-anchor="middle">h1</text>
+<rect x="20" y="230" width="76" height="30" rx="6" class="d-sis"/><text x="58" y="250" class="t t-s k-sis" text-anchor="middle">mil</text>
+<path d="M58 228V174" class="ln" style="stroke:var(--d-sis);stroke-width:1.8" marker-end="url(#c7d4-g)"/>
+<path d="M96 145H111" class="ln s-tra" style="stroke-width:2" marker-end="url(#c7d4-m)"/>
+<rect x="115" y="120" width="76" height="50" rx="8" class="c-tra"/><text x="153" y="150" class="t t-s k-tra" text-anchor="middle">h2</text>
+<rect x="115" y="230" width="76" height="30" rx="6" class="d-sis"/><text x="153" y="250" class="t t-s k-sis" text-anchor="middle">doscientos</text>
+<path d="M153 228V174" class="ln" style="stroke:var(--d-sis);stroke-width:1.8" marker-end="url(#c7d4-g)"/>
+<path d="M191 145H206" class="ln s-tra" style="stroke-width:2" marker-end="url(#c7d4-m)"/>
+<rect x="210" y="120" width="76" height="50" rx="8" class="c-tra"/><text x="248" y="150" class="t t-s k-tra" text-anchor="middle">h3</text>
+<rect x="210" y="230" width="76" height="30" rx="6" class="d-sis"/><text x="248" y="250" class="t t-s k-sis" text-anchor="middle">cincuenta</text>
+<path d="M248 228V174" class="ln" style="stroke:var(--d-sis);stroke-width:1.8" marker-end="url(#c7d4-g)"/>
+<path d="M286 145H301" class="ln s-tra" style="stroke-width:2" marker-end="url(#c7d4-m)"/>
+<rect x="305" y="120" width="76" height="50" rx="8" class="c-tra"/><text x="343" y="150" class="t t-s k-tra" text-anchor="middle">h4</text>
+<rect x="305" y="230" width="76" height="30" rx="6" class="d-sis"/><text x="343" y="250" class="t t-s k-sis" text-anchor="middle">pesos</text>
+<path d="M343 228V174" class="ln" style="stroke:var(--d-sis);stroke-width:1.8" marker-end="url(#c7d4-g)"/>
+<path d="M381 145H418" class="ln s-tra" style="stroke-width:2" marker-end="url(#c7d4-m)"/>
+<rect x="422" y="105" width="64" height="80" rx="8" class="d-inet" style="stroke-width:2.5"/>
+<rect x="440" y="113" width="28" height="8" class="caja"/>
+<rect x="440" y="124" width="28" height="8" class="caja"/>
+<rect x="440" y="135" width="28" height="8" class="caja"/>
+<rect x="440" y="146" width="28" height="8" class="caja"/>
+<rect x="440" y="157" width="28" height="8" class="caja"/>
+<rect x="440" y="168" width="28" height="8" class="caja"/>
+<text x="454" y="206" class="t t-xs t-m" text-anchor="middle">VECTOR FIJO</text><text x="454" y="220" class="t t-xs t-m" text-anchor="middle">(P. EJ. 256 NÚMEROS)</text>
+<text x="454" y="94" class="t t-s t-b k-warm" text-anchor="middle">cuello de botella</text>
+<path d="M486 145H516" class="ln s-tra" style="stroke-width:2" marker-end="url(#c7d4-m)"/>
+<rect x="520" y="120" width="60" height="50" rx="8" class="c-tra"/><text x="550" y="150" class="t t-s k-tra" text-anchor="middle">s1</text>
+<rect x="528" y="64" width="44" height="30" rx="6" class="c-apl"/><text x="550" y="84" class="t t-s t-b k-apl" text-anchor="middle">1</text>
+<path d="M550 120V98" class="ln s-apl" style="stroke-width:1.8" marker-end="url(#c7d4-g)"/>
+<path d="M580 145H590" class="ln s-tra" style="stroke-width:2" marker-end="url(#c7d4-m)"/>
+<path d="M572 80C586 80 586 196 610 196V174" class="ln ln-d" style="stroke-width:1.2" marker-end="url(#c7d4-g)"/>
+<rect x="594" y="120" width="60" height="50" rx="8" class="c-tra"/><text x="624" y="150" class="t t-s k-tra" text-anchor="middle">s2</text>
+<rect x="602" y="64" width="44" height="30" rx="6" class="c-apl"/><text x="624" y="84" class="t t-s t-b k-apl" text-anchor="middle">2</text>
+<path d="M624 120V98" class="ln s-apl" style="stroke-width:1.8" marker-end="url(#c7d4-g)"/>
+<path d="M654 145H664" class="ln s-tra" style="stroke-width:2" marker-end="url(#c7d4-m)"/>
+<path d="M646 80C660 80 660 196 684 196V174" class="ln ln-d" style="stroke-width:1.2" marker-end="url(#c7d4-g)"/>
+<rect x="668" y="120" width="60" height="50" rx="8" class="c-tra"/><text x="698" y="150" class="t t-s k-tra" text-anchor="middle">s3</text>
+<rect x="676" y="64" width="44" height="30" rx="6" class="c-apl"/><text x="698" y="84" class="t t-s t-b k-apl" text-anchor="middle">5</text>
+<path d="M698 120V98" class="ln s-apl" style="stroke-width:1.8" marker-end="url(#c7d4-g)"/>
+<path d="M728 145H738" class="ln s-tra" style="stroke-width:2" marker-end="url(#c7d4-m)"/>
+<path d="M720 80C734 80 734 196 758 196V174" class="ln ln-d" style="stroke-width:1.2" marker-end="url(#c7d4-g)"/>
+<rect x="742" y="120" width="60" height="50" rx="8" class="c-tra"/><text x="772" y="150" class="t t-s k-tra" text-anchor="middle">s4</text>
+<rect x="750" y="64" width="44" height="30" rx="6" class="c-apl"/><text x="772" y="84" class="t t-s t-b k-apl" text-anchor="middle">0</text>
+<path d="M772 120V98" class="ln s-apl" style="stroke-width:1.8" marker-end="url(#c7d4-g)"/>
+<path d="M802 145H812" class="ln s-tra" style="stroke-width:2" marker-end="url(#c7d4-m)"/>
+<path d="M794 80C808 80 808 196 832 196V174" class="ln ln-d" style="stroke-width:1.2" marker-end="url(#c7d4-g)"/>
+<rect x="816" y="120" width="60" height="50" rx="8" class="c-tra"/><text x="846" y="150" class="t t-s k-tra" text-anchor="middle">s5</text>
+<rect x="824" y="64" width="44" height="30" rx="6" class="c-apl"/><text x="846" y="84" class="t t-s t-b k-apl" text-anchor="middle">fin</text>
+<path d="M846 120V98" class="ln s-apl" style="stroke-width:1.8" marker-end="url(#c7d4-g)"/>
+<text x="520" y="222" class="t t-xs t-m">CADA SALIDA ENTRA AL PASO SIGUIENTE</text>
+<path d="M20 290H880" class="ln ln-d"/>
+<rect x="600" y="320" width="270" height="62" rx="8" class="c-tra" style="stroke-dasharray:4 3"/><text x="735" y="345" class="t t-s t-b k-tra" text-anchor="middle">atención</text><text x="735" y="366" class="t t-s k-tra" text-anchor="middle">el Transformer está en Modelos de IA</text>
+<text x="20" y="324" class="t t-s"><tspan class="t-b">El problema:</tspan> una frase de 4 palabras y una de 40 caben en el mismo vector.</text>
+<text x="20" y="344" class="t t-s">Con frases largas, lo del principio se pierde.</text>
+<text x="20" y="372" class="t t-s"><tspan class="t-b">La salida (2014-2015):</tspan> que el decodificador mire todos los estados</text>
+<text x="20" y="390" class="t t-s">h1…h4 y elija cuánto pesa cada uno en cada paso.</text>
+</svg></div><figcaption><b>Secuencia a secuencia y su cuello de botella.</b> A la izquierda, el codificador (morado) lee «mil doscientos cincuenta pesos», un estado por palabra. Todo lo que leyó queda en un único vector fijo (gris), marcado como cuello de botella. A la derecha, el decodificador parte de ese vector y escribe 1, 2, 5, 0 y fin (rosa); las flechas punteadas muestran que cada salida entra al paso siguiente. Abajo, el problema y la salida que se encontró: la atención.</figcaption></figure></section>
+<section><h2>El puente hacia la atención: el Transformer está en Modelos de IA</h2><div class="prose"><p>La salida del cuello de botella fue dejar que el decodificador mire <b>todos</b> los estados del codificador, no solo el último. En 2014, Dzmitry Bahdanau, Kyunghyun Cho y Yoshua Bengio agregaron al decodificador un mecanismo que, en cada paso, asigna un peso a cada estado del codificador según cuánto sirve para la palabra que va a escribir, y usa el promedio ponderado. Al escribir «2», el decodificador puede mirar sobre todo el estado de «doscientos». Ese mecanismo se llama <b>atención</b> (<i>attention</i>).</p></div><div class="analogia"><b>Imagínalo así</b><p>Volviendo al intérprete: ahora toma notas durante el discurso, una por frase, y al traducir cada parte vuelve a mirar la nota que corresponde. Ya no depende de recordarlo todo en un resumen: tiene a mano todo lo que escuchó y elige qué mirar.</p></div><div class="prose"><p>Con atención, la traducción de frases largas dejó de degradarse. Y en 2017, un equipo de Google publicó «Attention Is All You Need», que dio el paso radical: quitar la recurrencia por completo y construir la red solo con atención. Ese es el <b>Transformer</b>. Sin recurrencia, todas las posiciones se calculan a la vez, lo que aprovecha las tarjetas gráficas mucho mejor que una RNN, y cada palabra puede mirar directamente a cualquier otra, sin cadenas de multiplicaciones que desvanezcan la señal. Los modelos de lenguaje actuales son Transformers. Cómo funcionan la atención y el Transformer por dentro está en <a href="https://aaramirez.github.io/modelos-de-ia/temario.html" target="_blank" rel="noopener">Modelos de IA</a>.</p><p>Las redes recurrentes no desaparecieron. Siguen siendo útiles cuando la secuencia llega de a poco y hay que responder en el momento con poca memoria y poco cálculo: un sensor, un dispositivo chico, una serie de tiempo que se actualiza cada minuto. Y algunas arquitecturas recientes recuperan la idea de un estado que se actualiza paso a paso, buscando lo mejor de los dos mundos.</p></div><div class="ml"><b>En la práctica</b><p><b>El monto en letras.</b> Paula armó un piloto: la CNN lee cada dígito del monto en números, y una red secuencia a secuencia con LSTM convierte el monto en letras, leído por el escáner carácter por carácter, en dígitos; si los dos no coinciden, la casilla va a Rosa. Con montos cortos funcionó bien; con montos largos, del estilo «un millón doscientos treinta y cuatro mil…», empezó a fallar en las primeras cifras, el cuello de botella que describe el capítulo. Bruno señaló el otro costo: la LSTM procesa carácter por carácter y no aprovecha el paralelismo del servidor. Paula anotó la conclusión para Simón: para campos cortos, las recurrentes alcanzan; para textos largos, el camino es la atención.</p></div></section>
+<section><h2>La idea clave</h2><div class="prose"><p>Una red recurrente lee una secuencia paso a paso con el mismo bloque y los mismos pesos, y lleva un estado que funciona como memoria; por eso acepta secuencias de cualquier largo. Se entrena desplegándola en el tiempo y aplicando la retropropagación de siempre, con los gradientes de cada peso sumados en todos los pasos. Esa cadena de pasos es su debilidad: el gradiente se multiplica en cada paso, y se desvanece o explota. La LSTM y la GRU agregan compuertas que deciden qué olvidar, qué escribir y qué mostrar, y una celda que suma en vez de multiplicar, por donde la señal viaja lejos. Compartir pesos en el tiempo y las compuertas como solución al gradiente que se desvanece son las dos ideas del capítulo; el cuello de botella del vector fijo y la falta de paralelismo explican por qué la atención tomó el relevo.</p></div></section>
+<section><h2>Pruébate</h2><div class="quiz"><h3>Pruébate</h3><details><summary>¿Qué significa que una RNN comparte pesos en el tiempo, y qué ventaja da?</summary><p>Que el mismo bloque, con las mismas matrices W, U y V, se aplica en cada paso de la secuencia. Así la red acepta secuencias de cualquier largo con un número fijo de pesos, y lo que aprende en una posición sirve en todas.</p></details><details><summary>¿Por qué en la retropropagación en el tiempo el gradiente de W es una suma?</summary><p>Porque W se usó en cada paso de la secuencia desplegada; su gradiente total es la suma de lo que contribuyó en cada uno de esos usos.</p></details><details><summary>Si en cada paso hacia atrás el gradiente se multiplica por 0,5, ¿cuánto queda después de 10 pasos?</summary><p>0,5¹⁰ ≈ 0,001: menos de una milésima del original.</p></details><details><summary>¿Qué hace el recorte del gradiente y qué problema resuelve?</summary><p>Si la norma del gradiente pasa de un límite, lo achica hasta ese límite sin cambiar su dirección. Resuelve la explosión del gradiente, no su desvanecimiento.</p></details><details><summary>¿Por qué la celda de una LSTM deja pasar el gradiente mejor que el estado de una RNN simple?</summary><p>Porque se actualiza sumando: c_t = f·c_{t−1} + i·g. En el pase hacia atrás, por ese camino el gradiente solo se multiplica por la compuerta de olvido, que puede estar cerca de 1, en vez de por una matriz y la derivada de tanh en cada paso.</p></details><details><summary>¿Cuál es el cuello de botella de seq2seq y cómo lo resolvió la atención?</summary><p>Que toda la entrada tiene que resumirse en un único vector de tamaño fijo, el último estado del codificador. La atención deja que el decodificador mire todos los estados del codificador y pese cada uno en cada paso.</p></details></div></section>
+<section><h2>Para investigar</h2><div class="investiga"><h3>Para investigar</h3><p class="hint">Estas preguntas no se responden en el capítulo: búscalas por tu cuenta.</p><ol><li>¿Qué es una red recurrente bidireccional y por qué no sirve para predecir el carácter siguiente en tiempo real?<small>Pista: busca «bidirectional RNN».</small></li><li>¿Qué es la técnica de <i>teacher forcing</i> para entrenar decodificadores y qué problema causa al momento de usar el modelo?<small>Pista: busca «teacher forcing exposure bias».</small></li><li>¿Qué es la búsqueda en haz (<i>beam search</i>) y por qué un traductor no se queda siempre con la palabra más probable en cada paso?<small>Pista: busca «beam search decoding».</small></li><li>¿Qué es CTC (<i>Connectionist Temporal Classification</i>) y cómo permite reconocer voz o escritura sin saber dónde empieza y termina cada letra?<small>Pista: busca el artículo de Graves y otros (2006).</small></li><li>¿Qué son los modelos de espacio de estados como Mamba y en qué se parecen y se diferencian de una red recurrente?<small>Pista: busca «Mamba selective state space model 2023».</small></li></ol></div></section>
+<section><h2>Para saber más</h2><div class="vids"><span>Para saber más</span><a class="vid" href="https://colah.github.io/posts/2015-08-Understanding-LSTMs/" target="_blank" rel="noopener">Understanding LSTM Networks <small>la explicación ilustrada de Christopher Olah, la más citada sobre LSTM, en inglés</small></a><a class="vid" href="https://karpathy.github.io/2015/05/21/rnn-effectiveness/" target="_blank" rel="noopener">The Unreasonable Effectiveness of Recurrent Neural Networks <small>Andrej Karpathy entrena RNN de caracteres con textos y muestra qué aprenden sus celdas, en inglés</small></a><a class="vid" href="https://www.deeplearningbook.org/contents/rnn.html" target="_blank" rel="noopener">Deep Learning, capítulo 10 <small>redes recurrentes y modelos de secuencias en el libro de Goodfellow, Bengio y Courville, en inglés</small></a><a class="vid" href="https://arxiv.org/abs/1409.0473" target="_blank" rel="noopener">Neural Machine Translation by Jointly Learning to Align and Translate <small>el artículo de Bahdanau, Cho y Bengio que introdujo la atención, en inglés</small></a></div></section>
+<label class="got"><input type="checkbox" id="got"> Lo tengo claro</label>
+<nav class="pager" id="pager" aria-label="Capítulo anterior y siguiente"></nav>
+</main>
+</div>
+<footer><span>Curso abierto de aaramirez.github.io.</span><span>Sitio publicado: <a href="https://github.com/aaramirez/aprendizaje-profundo" target="_blank" rel="noopener">github.com/aaramirez/aprendizaje-profundo</a></span></footer>
+</div>
+<script src="assets/lab.js"></script>
+<script>
+(function(){
+  const {tok,canvasWidget}=window.Lab;
+  const raiz=document.querySelector('[id="07-lab-1"]');
+  const q=s=>raiz.querySelector(s);
+  function rnd(s){return function(){s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  function gauss(r){let u=0;while(!u)u=r();const v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+  const H=16,T=60,NSEQ=4,sig=x=>1/(1+Math.exp(-x));
+  let semilla=7,M=null;
+  /* Pesos al azar (con semilla) para las dos redes y cuatro secuencias de entrada con ruido. */
+  function construir(s){
+    const r=rnd(s);
+    const W=new Float32Array(H*H),U=new Float32Array(H);
+    for(let i=0;i<H*H;i++)W[i]=gauss(r)/Math.sqrt(H);
+    for(let i=0;i<H;i++)U[i]=gauss(r);
+    const Wl=new Float32Array(4*H*H),Ul=new Float32Array(4*H);
+    for(let i=0;i<4*H*H;i++)Wl[i]=gauss(r)/Math.sqrt(H)*0.5;
+    for(let i=0;i<4*H;i++)Ul[i]=gauss(r);
+    const xs=[];for(let n=0;n<NSEQ;n++){const x=new Float32Array(T);for(let t=0;t<T;t++)x[t]=gauss(r)*0.5;xs.push(x);}
+    return {W,U,Wl,Ul,xs};
+  }
+  /* Red simple: h_t = tanh(rho·W h_{t-1} + U x_t). Devuelve, para cada t, la norma de ∂h_T/∂x_t,
+     calculada con retropropagación en el tiempo (un pase hacia atrás por cada componente de h_T). */
+  function rnnInfl(x,rho){
+    const hs=[new Float32Array(H)];
+    for(let t=0;t<T;t++){const hp=hs[t],h=new Float32Array(H);
+      for(let i=0;i<H;i++){let s=M.U[i]*x[t];for(let j=0;j<H;j++)s+=rho*M.W[i*H+j]*hp[j];h[i]=Math.tanh(s);}hs.push(h);}
+    const acc=new Float64Array(T);
+    for(let a=0;a<H;a++){
+      let dh=new Float32Array(H);dh[a]=1;
+      for(let t=T-1;t>=0;t--){const h=hs[t+1],da=new Float32Array(H);let gx=0;
+        for(let i=0;i<H;i++){da[i]=dh[i]*(1-h[i]*h[i]);gx+=da[i]*M.U[i];}
+        acc[t]+=gx*gx;
+        const nd=new Float32Array(H);for(let j=0;j<H;j++){let s=0;for(let i=0;i<H;i++)s+=rho*M.W[i*H+j]*da[i];nd[j]=s;}dh=nd;}
+    }
+    return acc;
+  }
+  /* LSTM con compuertas de olvido f, entrada i, candidato g y salida o. bf se suma a la compuerta de olvido. */
+  function lstmInfl(x,bf){
+    const S=[];let h=new Float32Array(H),c=new Float32Array(H);
+    for(let t=0;t<T;t++){const f=new Float32Array(H),ii=new Float32Array(H),gg=new Float32Array(H),o=new Float32Array(H),cn=new Float32Array(H),hn=new Float32Array(H);
+      for(let k=0;k<4;k++)for(let a=0;a<H;a++){const r=k*H+a;let s=M.Ul[r]*x[t];for(let j=0;j<H;j++)s+=M.Wl[r*H+j]*h[j];
+        if(k===0)f[a]=sig(s+bf);else if(k===1)ii[a]=sig(s);else if(k===2)gg[a]=Math.tanh(s);else o[a]=sig(s);}
+      for(let a=0;a<H;a++){cn[a]=f[a]*c[a]+ii[a]*gg[a];hn[a]=o[a]*Math.tanh(cn[a]);}
+      S.push({cp:c,f,ii,gg,o,c:cn});h=hn;c=cn;}
+    const acc=new Float64Array(T);
+    for(let a=0;a<H;a++){
+      let dh=new Float32Array(H),dc=new Float32Array(H);dh[a]=1;
+      for(let t=T-1;t>=0;t--){const s=S[t],dz=new Float32Array(4*H),ndc=new Float32Array(H);
+        for(let b=0;b<H;b++){const tc=Math.tanh(s.c[b]);const dcc=dc[b]+dh[b]*s.o[b]*(1-tc*tc);
+          dz[b]=dcc*s.cp[b]*s.f[b]*(1-s.f[b]);dz[H+b]=dcc*s.gg[b]*s.ii[b]*(1-s.ii[b]);
+          dz[2*H+b]=dcc*s.ii[b]*(1-s.gg[b]*s.gg[b]);dz[3*H+b]=dh[b]*tc*s.o[b]*(1-s.o[b]);ndc[b]=dcc*s.f[b];}
+        let gx=0;for(let r=0;r<4*H;r++)gx+=dz[r]*M.Ul[r];acc[t]+=gx*gx;
+        const nd=new Float32Array(H);for(let j=0;j<H;j++){let qq=0;for(let r=0;r<4*H;r++)qq+=M.Wl[r*H+j]*dz[r];nd[j]=qq;}
+        dh=nd;dc=ndc;}
+    }
+    return acc;
+  }
+  /* Promedio en las cuatro secuencias; se devuelve indexado por k = pasos hacia atrás (1..T). */
+  function curva(fn,p){
+    const out=new Float64Array(T+1);
+    for(const x of M.xs){const a=fn(x,p);for(let t=0;t<T;t++)out[T-t]+=Math.sqrt(a[t])/NSEQ;}
+    return out;
+  }
+  let R=null,L=null,fMedia=0;
+  function calcular(){
+    const rho=+q('#c7l1-rho').value,bf=+q('#c7l1-bf').value;
+    R=curva(rnnInfl,rho);L=curva(lstmInfl,bf);
+    /* compuerta de olvido promedio de la LSTM, para el texto */
+    let s=0,n=0;const x=M.xs[0];let h=new Float32Array(H),c=new Float32Array(H);
+    for(let t=0;t<T;t++){const hn=new Float32Array(H);const fs=new Float32Array(H),is=new Float32Array(H),gs=new Float32Array(H),os=new Float32Array(H);
+      for(let k=0;k<4;k++)for(let a=0;a<H;a++){const r=k*H+a;let z=M.Ul[r]*x[t];for(let j=0;j<H;j++)z+=M.Wl[r*H+j]*h[j];
+        if(k===0){fs[a]=sig(z+bf);s+=fs[a];n++;}else if(k===1)is[a]=sig(z);else if(k===2)gs[a]=Math.tanh(z);else os[a]=sig(z);}
+      for(let a=0;a<H;a++){c[a]=fs[a]*c[a]+is[a]*gs[a];hn[a]=os[a]*Math.tanh(c[a]);}h=hn;}
+    fMedia=s/n;
+  }
+  const nf=(v)=>{if(v===0)return '0';if(v>=0.01&&v<1000)return v.toFixed(v<1?3:1).replace('.',',');const e=Math.floor(Math.log10(v));const m=v/Math.pow(10,e);const sup='⁰¹²³⁴⁵⁶⁷⁸⁹';return m.toFixed(1).replace('.',',')+'·10'+(e<0?'⁻':'')+String(Math.abs(e)).split('').map(c=>sup[+c]).join('');};
+  const recuerda=(c,k)=>c[k]>=0.01*c[1];
+  const dibujar=canvasWidget(q('#c7l1-cv'),w=>w<520?0.8:0.42,(ctx,w,h)=>{
+    if(!R)return;
+    const p={l:44,r:12,t:12,b:28},pw=w-p.l-p.r,ph=h-p.t-p.b;
+    let lo=-10,hi=1;
+    for(let k=1;k<=T;k++){for(const c of [R,L]){const v=Math.log10(Math.max(c[k],1e-12));if(v>hi)hi=Math.ceil(v);}}
+    const X=k=>p.l+(k-1)/(T-1)*pw,Y=v=>p.t+(hi-Math.max(lo,Math.min(hi,v)))/(hi-lo)*ph;
+    ctx.clearRect(0,0,w,h);
+    ctx.font='11px '+tok('--f-mono');ctx.lineWidth=1;
+    for(let e=lo;e<=hi;e++){ctx.strokeStyle=tok('--grid');ctx.beginPath();ctx.moveTo(p.l,Y(e));ctx.lineTo(p.l+pw,Y(e));ctx.stroke();
+      if((e-lo)%(w<520?3:2)===0){ctx.fillStyle=tok('--muted');ctx.textAlign='right';ctx.textBaseline='middle';ctx.fillText(e===0?'1':'1e'+e,p.l-5,Y(e));}}
+    ctx.textAlign='center';ctx.textBaseline='top';
+    for(const k of [1,5,10,20,30,40,50,60]){ctx.fillStyle=tok('--muted');ctx.fillText(String(k),X(k),p.t+ph+5);}
+    for(const k of [5,20,50]){ctx.strokeStyle=tok('--muted');ctx.setLineDash([2,3]);ctx.beginPath();ctx.moveTo(X(k),p.t);ctx.lineTo(X(k),p.t+ph);ctx.stroke();}
+    ctx.setLineDash([]);
+    ctx.fillStyle=tok('--muted');ctx.textAlign='right';ctx.textBaseline='bottom';ctx.fillText('pasos hacia atrás (k)',p.l+pw,p.t+ph-3);
+    for(const [c,col] of [[R,tok('--warm')],[L,tok('--c-tra')]]){
+      ctx.strokeStyle=col;ctx.lineWidth=1;ctx.setLineDash([5,4]);const u=Math.log10(Math.max(c[1]*0.01,1e-12));
+      ctx.beginPath();ctx.moveTo(p.l,Y(u));ctx.lineTo(p.l+pw,Y(u));ctx.stroke();ctx.setLineDash([]);
+      ctx.lineWidth=2.5;ctx.beginPath();
+      for(let k=1;k<=T;k++){const v=Math.log10(Math.max(c[k],1e-12));k===1?ctx.moveTo(X(k),Y(v)):ctx.lineTo(X(k),Y(v));}
+      ctx.stroke();
+      for(const k of [5,20,50]){const v=Math.log10(Math.max(c[k],1e-12));ctx.beginPath();ctx.arc(X(k),Y(v),4,0,7);ctx.fillStyle=col;ctx.fill();}
+    }
+  });
+  function texto(){
+    const tj=q('#c7l1-tj');tj.innerHTML='';
+    for(const k of [5,20,50]){
+      const d=document.createElement('div');d.className='c7l1-t';
+      const fila=(nom,cl,c)=>'<div class="c7l1-fila"><span class="'+cl+'">'+nom+'</span><span class="c7l1-v">'+nf(c[k])+'</span><span class="'+(recuerda(c,k)?'c7l1-ok">recuerda':'c7l1-no">olvidó')+'</span></div>';
+      d.innerHTML='<b>Hace '+k+' pasos</b>'+fila('simple','c7l1-r',R)+fila('LSTM','c7l1-l',L);
+      tj.appendChild(d);
+    }
+    const rho=+q('#c7l1-rho').value;
+    const lastR=[5,20,50].filter(k=>recuerda(R,k)).pop(),lastL=[5,20,50].filter(k=>recuerda(L,k)).pop();
+    const crece=R[50]>R[1];
+    let t='';
+    if(crece)t+='Con escala '+rho.toFixed(2).replace('.',',')+' la red simple entra en una zona inestable: lo que leyó hace 50 pasos pesa más que lo de ayer, porque el gradiente crece paso a paso. Ese es el gradiente que explota, el otro lado del mismo problema. ';
+    else t+='La red simple '+(lastR?'todavía recuerda lo que leyó hace '+lastR+' pasos, pero no más atrás':'ya no distingue lo que leyó hace 5 pasos')+': cada paso hacia atrás multiplica el gradiente por los pesos recurrentes y por la derivada de tanh, que es menor que 1. ';
+    t+='La LSTM, con su compuerta de olvido abierta en promedio al '+Math.round(fMedia*100)+' %, '+(lastL?'recuerda hasta '+lastL+' pasos':'tampoco llega a 5 pasos')+'. ';
+    if(fMedia<0.7)t+='Sube el sesgo de olvido: con la compuerta casi cerrada, la LSTM borra su memoria igual que la red simple.';
+    else if(lastL===50)t+='Con la compuerta cerca de 1, el camino de la celda multiplica por casi 1 en cada paso y la señal llega viva desde lejos.';
+    q('#c7l1-out').textContent=t;
+  }
+  function todo(){calcular();dibujar();texto();}
+  const out=(id,f)=>{const el=q('#'+id),o=q('#'+id+'-o');const u=()=>{o.textContent=f(+el.value);};el.addEventListener('input',()=>{u();todo();});u();};
+  out('c7l1-rho',v=>v.toFixed(2).replace('.',','));
+  out('c7l1-bf',v=>(v>0?'+':v<0?'−':'')+Math.abs(v).toFixed(1).replace('.',','));
+  q('#c7l1-otra').addEventListener('click',()=>{semilla+=1;M=construir(semilla);todo();});
+  q('#c7l1-rec').addEventListener('click',()=>{q('#c7l1-rho').value=0.9;q('#c7l1-bf').value=3;q('#c7l1-rho').dispatchEvent(new Event('input'));q('#c7l1-bf').dispatchEvent(new Event('input'));});
+  M=construir(semilla);todo();
+})();
+</script>
+<script>
+(function(){
+  const {tok}=window.Lab;
+  const raiz=document.querySelector('[id="07-lab-2"]');
+  const q=s=>raiz.querySelector(s),qa=s=>raiz.querySelectorAll(s);
+  const sig=x=>1/(1+Math.exp(-x));
+  const FRASES=[
+    'Monto: 1.250,75 (mil doscientos cincuenta)',
+    'Pago 35,50 (efectivo) y 120,00 (tarjeta)',
+    'Código postal 1020 (zona 3), monto 89,90',
+    '(Total (con impuesto) 89,90)'
+  ];
+  /* Rasgos de cada carácter: dígito, coma, abre paréntesis, cierra paréntesis. */
+  const rasgos=ch=>({d:/[0-9]/.test(ch)?1:0,co:ch===','?1:0,ab:ch==='('?1:0,ce:ch===')'?1:0});
+  /* Pesos puestos a mano. Cada compuerta es sigmoide(preactivación) y el candidato es tanh(preactivación).
+     Celda A: escribe +1 al ver «(» y se borra al ver «)».
+     Celda B: suma 0,25 por cada dígito y se borra con cualquier otro carácter.
+     Celda C: escribe +1 al ver la coma, la conserva mientras siguen dígitos y solo «habla» (salida abierta) sobre dígitos. */
+  const CELDAS=[
+    {nom:'A: ¿paréntesis abierto?',
+     f:r=>5-10*r.ce, i:r=>-5+10*r.ab, g:r=>3*r.ab, o:r=>5,
+     ff:'5 − 10·[«)»]', fi:'−5 + 10·[«(»]', fg:'3·[«(»]', fo:'5'},
+    {nom:'B: dígitos seguidos',
+     f:r=>-5+10*r.d, i:r=>-5+10*r.d, g:r=>0.26*r.d, o:r=>5,
+     ff:'−5 + 10·[dígito]', fi:'−5 + 10·[dígito]', fg:'0,26·[dígito]', fo:'5'},
+    {nom:'C: ¿parte decimal?',
+     f:r=>-5+10*(r.d+r.co), i:r=>-5+10*r.co, g:r=>3*r.co, o:r=>-5+10*r.d,
+     ff:'−5 + 10·[dígito o coma]', fi:'−5 + 10·[coma]', fg:'3·[coma]', fo:'−5 + 10·[dígito]'}
+  ];
+  let texto=FRASES[0],celda=0,pos=-1,pasos=[],timer=null;
+  const sel=q('#c7l2-frase');
+  FRASES.forEach((f,i)=>{const o=document.createElement('option');o.value=i;o.textContent=f;sel.appendChild(o);});
+  /* La LSTM corre de verdad: c_t = f·c_{t−1} + i·g, h_t = o·tanh(c_t), para las tres celdas a la vez. */
+  function correr(){
+    pasos=[];const c=[0,0,0];
+    for(const ch of texto){
+      const r=rasgos(ch),p={ch,cel:[]};
+      CELDAS.forEach((C,k)=>{const f=sig(C.f(r)),i=sig(C.i(r)),g=Math.tanh(C.g(r)),o=sig(C.o(r));
+        const cp=c[k];c[k]=f*cp+i*g;p.cel.push({f,i,g,o,cp,c:c[k],h:o*Math.tanh(c[k])});});
+      pasos.push(p);
+    }
+  }
+  const mezcla=(col,a)=>'color-mix(in srgb, '+col+' '+Math.round(Math.max(0,Math.min(1,a))*100)+'%, transparent)';
+  function tira(){
+    const t=q('#c7l2-tira');t.innerHTML='';
+    const ancho=t.clientWidth||600,porFila=Math.max(6,Math.floor((ancho-16-66)/22));
+    let fila=null;
+    pasos.forEach((p,n)=>{
+      if(n%porFila===0){
+        fila=document.createElement('div');fila.className='c7l2-fila';t.appendChild(fila);
+        const ley=document.createElement('div');ley.className='c7l2-ley';
+        ['','olvido f','entrada i','cand. g','salida o','celda c','salida h'].forEach(s=>{const e=document.createElement('span');e.textContent=s;ley.appendChild(e);});
+        fila.appendChild(ley);
+      }
+      const col=document.createElement('div');col.className='c7l2-col';col.tabIndex=0;
+      col.setAttribute('role','button');col.setAttribute('aria-label','Carácter '+(n+1)+': '+(p.ch===' '?'espacio':p.ch));
+      const e=p.cel[celda];
+      const ch=document.createElement('div');ch.className='c7l2-ch';ch.textContent=p.ch===' '?'·':p.ch;col.appendChild(ch);
+      const acc=tok('--accent'),warm=tok('--warm'),good=tok('--c-tra');
+      const cuadro=(col0,a)=>{const d=document.createElement('div');d.className='c7l2-q';d.style.background=mezcla(col0,a);col.appendChild(d);};
+      cuadro(good,e.f);cuadro(good,e.i);cuadro(e.g>=0?acc:warm,Math.abs(e.g));cuadro(good,e.o);
+      const tc=Math.tanh(e.c);cuadro(tc>=0?acc:warm,Math.abs(tc));cuadro(e.h>=0?acc:warm,Math.abs(e.h));
+      if(pos>=0&&n>pos)col.classList.add('fut');
+      if(n===pos)col.classList.add('sel');
+      const ir=()=>{parar();pos=n;tira();detalle();};
+      col.addEventListener('click',ir);col.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();ir();}});
+      fila.appendChild(col);
+    });
+  }
+  const f2=v=>(v<0?'−':'')+Math.abs(v).toFixed(2).replace('.',',');
+  function detalle(){
+    const C=CELDAS[celda],d=q('#c7l2-det'),o=q('#c7l2-out');
+    if(pos<0){
+      const fin=pasos.length?pasos[pasos.length-1].cel[celda]:null;
+      d.textContent='Celda '+C.nom+'\nolvido   f = σ('+C.ff+')\nentrada  i = σ('+C.fi+')\ncandidato g = tanh('+C.fg+')\nsalida   o = σ('+C.fo+')\nc = f·c_anterior + i·g     h = o·tanh(c)';
+      o.textContent=resumen();return;
+    }
+    const p=pasos[pos],e=p.cel[celda];
+    d.textContent='Lee «'+(p.ch===' '?'espacio':p.ch)+'» (carácter '+(pos+1)+' de '+pasos.length+'), celda '+C.nom+'\n'+
+      'olvido  f = '+f2(e.f)+'   entrada i = '+f2(e.i)+'   candidato g = '+f2(e.g)+'   salida o = '+f2(e.o)+'\n'+
+      'c = '+f2(e.f)+' × '+f2(e.cp)+' + '+f2(e.i)+' × '+f2(e.g)+' = '+f2(e.c)+'     h = '+f2(e.o)+' × tanh('+f2(e.c)+') = '+f2(e.h);
+    let t='';
+    if(e.f<0.5&&Math.abs(e.cp)>0.05)t='La compuerta de olvido se cierra: la celda borra lo que guardaba ('+f2(e.cp)+'). ';
+    else if(e.f>0.5&&Math.abs(e.cp)>0.05&&e.i<0.5)t='Olvido abierto y entrada cerrada: la celda conserva lo que tenía sin cambiarlo. ';
+    if(e.i>0.5)t+='La compuerta de entrada se abre y escribe '+f2(e.i*e.g)+' en la celda. ';
+    if(e.o<0.5&&Math.abs(e.c)>0.05)t+='La salida está cerrada: la celda recuerda ('+f2(e.c)+'), pero no lo dice todavía. ';
+    if(e.o>0.5&&Math.abs(e.h)>0.2)t+='La salida está abierta: el resto de la red ve h = '+f2(e.h)+'. ';
+    if(!t)t='Nada que guardar ni que borrar: la celda sigue en '+f2(e.c)+'.';
+    o.textContent=t;
+  }
+  function resumen(){
+    const n=pasos.length;if(!n)return 'Escribe algo para que la LSTM lo lea.';
+    const k=celda,cs=pasos.map(p=>p.cel[k]);
+    if(k===0){const dentro=cs.filter(e=>e.c>0.5).length;return 'La celda A estuvo en 1 durante '+dentro+' de '+n+' caracteres: los que están dentro de un paréntesis. Cada «(» abre la entrada y cada «)» cierra el olvido. Con dos paréntesis anidados, esta celda sola no sabe contar: se queda en 1 y el primer «)» la borra.';}
+    if(k===1){let mx=0,run=0;for(const p of pasos){run=/[0-9]/.test(p.ch)?run+1:0;mx=Math.max(mx,run);}return 'La celda B sube un cuarto por cada dígito seguido y vuelve a 0 con cualquier otro carácter. La racha más larga tiene '+mx+' dígitos y la celda llegó a '+f2(Math.max(...cs.map(e=>e.c)))+'. Su salida tanh(c) se satura cerca de 1: distingue bien 1, 2 y 3 dígitos, mal 8 y 9.';}
+    const dec=pasos.filter((p,i)=>cs[i].h>0.5).map(p=>p.ch).join('');
+    return 'La celda C guarda «vi una coma» y solo habla cuando lee un dígito: marcó como decimales «'+dec+'». La salida cerrada le permite recordar sin molestar al resto de la red mientras no hace falta.';
+  }
+  function parar(){if(timer){clearInterval(timer);timer=null;q('#c7l2-leer').setAttribute('aria-pressed','false');}}
+  function nuevo(t){parar();texto=t.slice(0,48);correr();pos=-1;tira();detalle();}
+  sel.addEventListener('change',()=>{q('#c7l2-propia').value='';nuevo(FRASES[+sel.value]);});
+  q('#c7l2-propia').addEventListener('input',e=>{if(e.target.value)nuevo(e.target.value);});
+  qa('[data-c]').forEach(b=>b.addEventListener('click',()=>{celda=+b.dataset.c;qa('[data-c]').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));tira();detalle();}));
+  q('#c7l2-sig').addEventListener('click',()=>{parar();pos=Math.min(pasos.length-1,pos+1);tira();detalle();});
+  q('#c7l2-ant').addEventListener('click',()=>{parar();pos=Math.max(0,pos-1);tira();detalle();});
+  q('#c7l2-todo').addEventListener('click',()=>{parar();pos=-1;tira();detalle();});
+  q('#c7l2-leer').addEventListener('click',()=>{
+    if(timer){parar();return;}
+    const quieto=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if(quieto){pos=pasos.length-1;tira();detalle();return;}
+    q('#c7l2-leer').setAttribute('aria-pressed','true');pos=-1;
+    timer=setInterval(()=>{pos++;if(pos>=pasos.length){pos=pasos.length-1;parar();}tira();detalle();},450);
+  });
+  let anchoPrev=0;new ResizeObserver(()=>{const w=q('#c7l2-tira').clientWidth;if(Math.abs(w-anchoPrev)>10){anchoPrev=w;tira();}}).observe(q('#c7l2-tira'));
+  nuevo(texto);
+})();
+</script>
+</body>
+</html>

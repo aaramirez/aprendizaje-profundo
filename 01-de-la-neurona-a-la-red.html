@@ -1,0 +1,1379 @@
+<!doctype html>
+<html lang="es">
+<head>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-KX76XF8R');</script>
+<!-- End Google Tag Manager -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>De la neurona a la red · Aprendizaje profundo · Aprendizaje profundo</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Cómo aprende una red neuronal, de la neurona a las redes convolucionales y recurrentes, con redes que se entrenan dentro de la página y el gradiente a la vista.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400;1,8..60,600&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KX76XF8R"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+<div class="wrap" data-page="de-la-neurona-a-la-red">
+<header class="topbar"><a class="brand" href="index.html">Aprendizaje <b>profundo</b></a><span class="eyebrow">Curso visual e interactivo · Datos e inteligencia artificial</span><a class="al-sitio" href="https://aaramirez.github.io/">← Todos los cursos</a></header>
+<div class="layout">
+<nav class="toc" id="toc" aria-label="Ruta de aprendizaje"></nav>
+<main>
+<header class="page-head"><span class="num">CAPÍTULO 01 DE 10</span><h1>De la neurona a la red</h1><p class="lede">Una neurona artificial suma, pesa y decide; sola, solo sabe trazar rectas. Este capítulo la conecta en capas, muestra por qué la no linealidad entre capas lo cambia todo y presenta el problema que acompaña al curso: leer dígitos escritos a mano.</p></header>
+<section><h2>La neurona artificial: suma ponderada, sesgo y activación</h2><div class="prose"><p>Paula Medina acaba de llegar a la oficina de digitalización de Trámites Ejemplo, un servicio de trámites ficticio que recibe unos 12.000 formularios en papel al mes. Cada formulario tiene unas 30 casillas con dígitos escritos a mano: el número de documento, un teléfono, un código postal, una fecha. Ocho personas los teclean uno por uno. Simón Arce, el jefe de la oficina, le hizo un pedido corto: «que la computadora lea las casillas y que mi gente revise solo las dudosas».</p><p>Paula viene de construir modelos con scikit-learn y sabe que un clasificador aprende de ejemplos. Lo nuevo es la herramienta: una <b>red neuronal</b> (<i>neural network</i>), un modelo hecho de muchas piezas pequeñas e iguales conectadas entre sí. Para entender la red hay que entender primero la pieza.</p></div><div class="analogia"><b>Imagínalo así</b><p>Piensa en un comité que decide si aprobar un gasto. Cada miembro opina, pero no todos pesan igual: el gerente de finanzas cuenta el triple, un opositor resta. El comité suma las opiniones con sus pesos, compara la suma con lo exigente que es (un comité estricto pide más votos) y decide. Una neurona artificial hace exactamente eso con números.</p></div><div class="prose"><p>Una <b>neurona artificial</b> (<i>artificial neuron</i>) recibe varias entradas <span class="math">x_1, x_2, \dots, x_n</span>, por ejemplo la intensidad de tinta de algunos píxeles. Multiplica cada una por un <b>peso</b> (<i>weight</i>) <span class="math">w_i</span>, que dice cuánto importa esa entrada y en qué sentido: un peso positivo empuja la respuesta hacia arriba y uno negativo la empuja hacia abajo. Suma todo y le agrega un <b>sesgo</b> (<i>bias</i>) <span class="math">b</span>, un número que corre el punto de decisión, como la exigencia del comité. El resultado es la <b>suma ponderada</b> (<i>weighted sum</i>):</p><div class="math-display">z = w_1 x_1 + w_2 x_2 + \dots + w_n x_n + b</div><p>Por último aplica una <b>función de activación</b> (<i>activation function</i>) <span class="math">f</span>, que convierte la suma en la salida de la neurona: <span class="math">a = f(z)</span>. Puede ser un «sí o no», un número entre 0 y 1, o simplemente «la suma si es positiva y cero si no». Ese número <span class="math">a</span> se llama la <b>activación</b> (<i>activation</i>) de la neurona.</p></div><figure class="fig fig-esquema" id="01-diagrama-1"><div class="lienzo"><svg viewBox="0 0 900 360" style="min-width:660px" role="img" aria-label="Una neurona artificial: tres entradas multiplicadas por sus pesos se suman junto con el sesgo; la suma pasa por una función de activación y sale un número">
+<defs><marker id="c1d1-m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="fl-muted"/></marker>
+<marker id="c1d1-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" style="fill:var(--c-red)"/></marker>
+<marker id="c1d1-r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" style="fill:var(--warm)"/></marker></defs>
+<text x="20" y="26" class="t t-xs t-b k-sis">ENTRADAS (PÍXELES)</text>
+<text x="300" y="26" class="t t-xs t-b t-m">PESOS</text>
+<text x="420" y="26" class="t t-xs t-b k-red">SUMA PONDERADA</text>
+<text x="620" y="26" class="t t-xs t-b k-red">ACTIVACIÓN</text>
+<text x="790" y="26" class="t t-xs t-b t-m">SALIDA</text>
+<circle cx="70" cy="80" r="26" class="d-sis"/><text x="70" y="85" text-anchor="middle" class="t t-b">0,8</text><text x="108" y="70" class="t t-s t-m">x₁</text>
+<circle cx="70" cy="170" r="26" class="d-sis"/><text x="70" y="175" text-anchor="middle" class="t t-b">0,2</text><text x="108" y="160" class="t t-s t-m">x₂</text>
+<circle cx="70" cy="260" r="26" class="d-sis"/><text x="70" y="265" text-anchor="middle" class="t t-b">1,0</text><text x="108" y="250" class="t t-s t-m">x₃</text>
+<path d="M98 82L428 160" class="s-red" style="stroke-width:4;fill:none" marker-end="url(#c1d1-a)"/>
+<path d="M98 170L426 170" style="stroke:var(--warm);stroke-width:5;fill:none" marker-end="url(#c1d1-r)"/>
+<path d="M98 258L428 182" class="s-red" style="stroke-width:2;fill:none" marker-end="url(#c1d1-a)"/>
+<rect x="250" y="88" width="104" height="26" rx="6" class="caja"/><text x="302" y="106" text-anchor="middle" class="t t-s t-mono k-red">w₁ = 1,5</text>
+<rect x="250" y="146" width="104" height="26" rx="6" class="caja"/><text x="302" y="164" text-anchor="middle" class="t t-s t-mono k-warm">w₂ = −2,0</text>
+<rect x="250" y="216" width="104" height="26" rx="6" class="caja"/><text x="302" y="234" text-anchor="middle" class="t t-s t-mono k-red">w₃ = 0,5</text>
+<circle cx="480" cy="170" r="46" class="c-red"/><text x="480" y="166" text-anchor="middle" class="t t-b" style="font-size:24px">Σ</text><text x="480" y="190" text-anchor="middle" class="t t-s t-mono">+ b</text>
+<rect x="430" y="246" width="100" height="28" rx="6" class="caja"/><text x="480" y="265" text-anchor="middle" class="t t-s t-mono">b = −0,4</text>
+<path d="M480 246V218" class="ln" marker-end="url(#c1d1-m)"/>
+<text x="380" y="310" class="t t-s t-mono">z = 0,8·1,5 + 0,2·(−2) + 1,0·0,5 − 0,4 = 0,9</text>
+<path d="M526 170H604" class="ln" marker-end="url(#c1d1-m)"/>
+<text x="565" y="160" text-anchor="middle" class="t t-s t-mono">z = 0,9</text>
+<rect x="608" y="120" width="130" height="100" rx="10" class="c-red"/>
+<path d="M622 200H672L722 140" class="s-red" style="stroke-width:2.4;fill:none"/>
+<path d="M622 200H722" class="ln ln-d"/>
+<text x="673" y="140" text-anchor="middle" class="t t-s t-b k-red">f(z)</text>
+<text x="673" y="236" text-anchor="middle" class="t t-s t-m">ReLU: f(z) = máx(0, z)</text>
+<path d="M738 170H800" class="ln" marker-end="url(#c1d1-m)"/>
+<circle cx="840" cy="170" r="34" class="c-red" style="stroke-width:2"/><text x="840" y="176" text-anchor="middle" class="t t-b">0,9</text>
+<text x="840" y="222" text-anchor="middle" class="t t-s t-m">con sigmoide:</text><text x="840" y="238" text-anchor="middle" class="t t-s t-m">0,71</text>
+<text x="20" y="344" class="t t-s t-m">Peso azul = positivo (empuja hacia arriba) · peso rojo = negativo (resta) · el grosor dice cuánto pesa.</text>
+</svg></div><figcaption><b>Una neurona artificial, con números.</b> Se lee de izquierda a derecha. Entran tres píxeles (0,8, 0,2 y 1,0). Cada flecha lleva un peso: azul si es positivo, rojo si es negativo, más gruesa cuanto más pesa. El círculo suma los productos y el sesgo: 0,8·1,5 + 0,2·(−2) + 1,0·0,5 − 0,4 = 0,9. La caja de activación aplica ReLU, que deja pasar los valores positivos, y sale 0,9; con una sigmoide habría salido 0,71.</figcaption></figure><div class="prose"><p>El nombre viene de la biología, y la comparación sirve hasta cierto punto. Una neurona del cerebro recibe señales por sus dendritas, las integra y, si superan un umbral, dispara por su axón. En 1943, Warren McCulloch y Walter Pitts propusieron un modelo matemático de esa idea: entradas que se suman y una salida que se enciende al pasar un umbral. La neurona artificial moderna desciende de ese modelo, pero es una caricatura útil, no una copia: las neuronas reales son mucho más complejas, y para entender las redes de este curso no hace falta saber nada de biología.</p><p>Lo que sí importa es qué puede decidir una neurona sola. Paula la prueba con el par de dígitos que más le cuesta al equipo de Rosa Duarte, la coordinadora de los transcriptores: el 4 abierto que parece un 9. Cada imagen tiene 196 píxeles, así que la neurona tiene 196 pesos y un sesgo, y una activación que da un número entre 0 y 1: cerca de 1 si cree que es un 9, cerca de 0 si cree que es un 4. Entrenada con los 11.791 cuatros y nueves de MNIST, acierta el 95,9 % de los 1.991 de prueba. Nada mal para una sola pieza. Pero esa pieza tiene un límite, y es geométrico.</p></div></section>
+<section><h2>El perceptrón (1958) y el problema del XOR</h2><div class="prose"><p>En 1958, el psicólogo Frank Rosenblatt presentó el <b>perceptrón</b> (<i>perceptron</i>): una neurona con activación de escalón (responde 1 si la suma pasa de cero y 0 si no) y, sobre todo, una regla para que aprendiera sola. La <b>regla del perceptrón</b> es sencilla: se le muestra un ejemplo; si acierta, no se toca nada; si se equivoca, cada peso se corre un poco en la dirección que habría dado la respuesta correcta. Rosenblatt construyó además una máquina, el Mark I Perceptron, con una cámara de 20 × 20 fotoceldas que aprendía a distinguir figuras simples. La prensa de la época anunció máquinas que pronto caminarían, hablarían y serían conscientes de sí mismas.</p><p>Una neurona con escalón divide las entradas en dos grupos con una frontera. Con dos entradas, esa frontera es una <b>recta</b> en el plano: de un lado responde 1 y del otro 0. Con 196 entradas, es su equivalente en 196 dimensiones, un <b>hiperplano</b> (<i>hyperplane</i>). Por eso se dice que la neurona es un <b>clasificador lineal</b> (<i>linear classifier</i>): solo separa bien los grupos que se pueden separar con un corte recto.</p><p>El problema más famoso que no cumple esa condición es el <b>XOR</b> (<i>exclusive or</i>, «o exclusivo»): con dos entradas que valen 0 o 1, la respuesta es 1 si las entradas son distintas y 0 si son iguales. Los casos (0,1) y (1,0) dan 1; los casos (0,0) y (1,1) dan 0. Están en las esquinas opuestas de un cuadrado, cruzados, y ninguna recta deja los dos de un lado y los otros dos del otro.</p></div><div class="lab" id="01-lab-2"><div class="lab-title"><span class="tag">Laboratorio</span><h3>El XOR: una neurona sola no puede, dos capas sí</h3></div><p class="hint">En el primer modo, mueve los dos pesos y el sesgo de una neurona y trata de acertar los cuatro casos: vas a llegar a tres. En el segundo, mira cómo la regla del perceptrón corrige un caso y descompone otro, sin terminar nunca. En el tercero, entrena una red con dos neuronas ocultas y mira el panel de la derecha: lo que ven las neuronas ocultas.</p><style>
+[id="01-lab-2"] .c1l2-rot{font:700 .7rem var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px}
+[id="01-lab-2"] .btns{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+[id="01-lab-2"] .c1l2-graf{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:14px}
+[id="01-lab-2"] canvas{width:100%;max-width:340px;display:block;border-radius:8px;background:var(--card);border:1px solid var(--line)}
+[id="01-lab-2"] .c1l2-tabla{overflow-x:auto}
+[id="01-lab-2"] .c1l2-tabla td,[id="01-lab-2"] .c1l2-tabla th{font-family:var(--f-mono);font-size:.82rem;text-align:center;padding:3px 8px}
+</style>
+<div class="btns" role="group" aria-label="Modo"><span class="c1l2-rot" style="margin:0">Modo</span>
+  <button type="button" data-modo="mano" aria-pressed="true">Una neurona: tú mueves los pesos</button>
+  <button type="button" data-modo="percep" aria-pressed="false">Una neurona aprende sola</button>
+  <button type="button" data-modo="red" aria-pressed="false">Dos capas (2-2-1)</button>
+</div>
+<div class="ctls" id="c1l2-ctls">
+  <div class="ctl"><label for="c1l2-w1">Peso w₁ (de x₁)</label><input type="range" id="c1l2-w1" min="-5" max="5" step="0.1" value="1"><output id="c1l2-w1v">1,0</output></div>
+  <div class="ctl"><label for="c1l2-w2">Peso w₂ (de x₂)</label><input type="range" id="c1l2-w2" min="-5" max="5" step="0.1" value="1"><output id="c1l2-w2v">1,0</output></div>
+  <div class="ctl"><label for="c1l2-b">Sesgo b</label><input type="range" id="c1l2-b" min="-5" max="5" step="0.1" value="-0.5"><output id="c1l2-bv">−0,5</output></div>
+</div>
+<div class="btns" id="c1l2-acc" hidden><button type="button" class="primary" id="c1l2-go">Entrenar</button><button type="button" id="c1l2-sem">Otra semilla</button></div>
+<div class="c1l2-graf">
+  <div><span class="c1l2-rot">Entradas (x₁, x₂) y la respuesta de la red</span>
+    <canvas id="c1l2-plano" aria-label="Los cuatro casos del XOR en el plano: (0,0) y (1,1) dan 0, (0,1) y (1,0) dan 1; la zona sombreada es lo que responde la red"></canvas></div>
+  <div id="c1l2-oc" hidden><span class="c1l2-rot">Lo que ven las neuronas ocultas (h₁, h₂)</span>
+    <canvas id="c1l2-oculto" aria-label="Los cuatro casos dibujados según las salidas de las dos neuronas ocultas; en este espacio una recta sí los separa"></canvas></div>
+  <div class="c1l2-tabla"><span class="c1l2-rot">Los cuatro casos</span><table class="tbl" id="c1l2-tab"></table></div>
+</div>
+<div class="readout texto" id="c1l2-out" aria-live="polite"></div></div><div class="prose"><p>En 1969, Marvin Minsky y Seymour Papert publicaron <i>Perceptrons</i>, un libro que demostró con rigor estos límites. Sabían que agregar una capa intermedia de neuronas resolvía el XOR; lo que nadie sabía era cómo entrenar esa capa, porque la regla del perceptrón solo dice cómo corregir la neurona que da la respuesta final. El libro coincidió con el fin del entusiasmo y del dinero para estas investigaciones, y el campo entró en el primer <b>invierno de la IA</b> (<i>AI winter</i>). La salida llegó en los años ochenta con un método para entrenar todas las capas a la vez, la retropropagación del capítulo 3.</p></div><figure class="fig fig-esquema" id="01-diagrama-2"><div class="lienzo"><svg viewBox="0 0 900 420" style="min-width:660px" role="img" aria-label="Tres tablas lógicas en el plano: Y y O se separan con una recta, el XOR no. Abajo, la solución con dos neuronas ocultas: una calcula O, otra calcula Y, y la salida responde O pero no Y">
+<defs><marker id="c1d2-m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="fl-muted"/></marker></defs>
+<text x="20" y="30" class="t t-xs t-b t-m">Y (AND): UNA RECTA BASTA</text><rect x="20" y="40" width="170" height="170" rx="8" class="caja"/><path d="M100 40L190 130" style="stroke:var(--ink);stroke-width:2;fill:none"/><circle cx="60" cy="180" r="9" style="fill:var(--accent)"/><text x="60" y="204" text-anchor="middle" class="t t-xs t-mono t-m">(0,0)</text><circle cx="60" cy="70" r="9" style="fill:var(--accent)"/><text x="60" y="54" text-anchor="middle" class="t t-xs t-mono t-m">(0,1)</text><circle cx="150" cy="180" r="9" style="fill:var(--accent)"/><text x="150" y="204" text-anchor="middle" class="t t-xs t-mono t-m">(1,0)</text><path d="M150 59L160 77L140 77z" style="fill:var(--warm)"/><text x="150" y="54" text-anchor="middle" class="t t-xs t-mono t-m">(1,1)</text><text x="20" y="232" class="t t-s">Solo (1,1) da 1</text>
+<text x="225" y="30" class="t t-xs t-b t-m">O (OR): UNA RECTA BASTA</text><rect x="225" y="40" width="170" height="170" rx="8" class="caja"/><path d="M225 160L315 40" style="stroke:var(--ink);stroke-width:2;fill:none"/><circle cx="265" cy="180" r="9" style="fill:var(--accent)"/><text x="265" y="204" text-anchor="middle" class="t t-xs t-mono t-m">(0,0)</text><path d="M265 59L275 77L255 77z" style="fill:var(--warm)"/><text x="265" y="54" text-anchor="middle" class="t t-xs t-mono t-m">(0,1)</text><path d="M355 169L365 187L345 187z" style="fill:var(--warm)"/><text x="355" y="204" text-anchor="middle" class="t t-xs t-mono t-m">(1,0)</text><path d="M355 59L365 77L345 77z" style="fill:var(--warm)"/><text x="355" y="54" text-anchor="middle" class="t t-xs t-mono t-m">(1,1)</text><text x="225" y="232" class="t t-s">Basta una entrada en 1</text>
+<text x="430" y="30" class="t t-xs t-b k-warm">XOR: NINGUNA RECTA SIRVE</text><rect x="430" y="40" width="170" height="170" rx="8" class="caja"/><circle cx="470" cy="180" r="9" style="fill:var(--accent)"/><text x="470" y="204" text-anchor="middle" class="t t-xs t-mono t-m">(0,0)</text><path d="M470 59L480 77L460 77z" style="fill:var(--warm)"/><text x="470" y="54" text-anchor="middle" class="t t-xs t-mono t-m">(0,1)</text><path d="M560 169L570 187L550 187z" style="fill:var(--warm)"/><text x="560" y="204" text-anchor="middle" class="t t-xs t-mono t-m">(1,0)</text><circle cx="560" cy="70" r="9" style="fill:var(--accent)"/><text x="560" y="54" text-anchor="middle" class="t t-xs t-mono t-m">(1,1)</text><text x="430" y="232" class="t t-s">Da 1 si las entradas difieren</text>
+<path d="M455 50L590 200M590 50L455 200" style="stroke:var(--warm);stroke-width:1.5;stroke-dasharray:5 5;opacity:.6"/>
+<rect x="640" y="40" width="244" height="170" rx="8" class="caja"/>
+<text x="652" y="30" class="t t-xs t-b k-red">LA SALIDA: DOS RECTAS</text>
+<text x="652" y="64" class="t t-s">Una capa oculta con dos</text>
+<text x="652" y="80" class="t t-s">neuronas traza dos rectas;</text>
+<text x="652" y="96" class="t t-s">la de salida combina:</text>
+<text x="652" y="122" class="t t-s t-mono k-red">XOR = O y no Y</text>
+<text x="652" y="148" class="t t-s">Minsky y Papert (1969)</text>
+<text x="652" y="164" class="t t-s">mostraron el límite de una</text>
+<text x="652" y="180" class="t t-s">capa; no había cómo</text>
+<text x="652" y="196" class="t t-s">entrenar dos… todavía.</text>
+<path d="M20 256H884" class="ln ln-d"/>
+<text x="20" y="282" class="t t-xs t-b k-red">LA RED 2-2-1 QUE CALCULA XOR (PESOS PUESTOS A MANO, ACTIVACIÓN ESCALÓN)</text>
+<circle cx="80" cy="320" r="20" class="d-sis"/><text x="80" y="325" text-anchor="middle" class="t t-b">x₁</text>
+<circle cx="80" cy="390" r="20" class="d-sis"/><text x="80" y="395" text-anchor="middle" class="t t-b">x₂</text>
+<circle cx="330" cy="320" r="22" class="c-red"/><text x="330" y="325" text-anchor="middle" class="t t-b">h₁</text>
+<circle cx="330" cy="390" r="22" class="c-red"/><text x="330" y="395" text-anchor="middle" class="t t-b">h₂</text>
+<path d="M100 320H306M100 390H306M98 328L310 382M98 382L310 328" class="s-red" style="stroke-width:1.8;fill:none"/>
+<text x="200" y="312" text-anchor="middle" class="t t-xs t-mono k-red">pesos 1 y 1</text>
+<text x="368" y="318" class="t t-s">h₁ = escalón(x₁ + x₂ − 0,5) → O</text>
+<text x="368" y="398" class="t t-s">h₂ = escalón(x₁ + x₂ − 1,5) → Y</text>
+<circle cx="700" cy="355" r="24" class="c-apl"/><text x="700" y="360" text-anchor="middle" class="t t-b">y</text>
+<path d="M352 326L674 350" class="s-red" style="stroke-width:2;fill:none" marker-end="url(#c1d2-m)"/>
+<path d="M352 386L674 362" style="stroke:var(--warm);stroke-width:2;fill:none" marker-end="url(#c1d2-m)"/>
+<text x="520" y="334" class="t t-xs t-mono k-red">+1</text><text x="520" y="384" class="t t-xs t-mono k-warm">−1</text>
+<text x="736" y="350" class="t t-s">y = escalón(h₁ − h₂ − 0,5)</text>
+<text x="736" y="368" class="t t-s t-m">1 solo si h₁ = 1 y h₂ = 0</text>
+</svg></div><figcaption><b>El XOR y cómo lo resuelven dos capas.</b> Arriba, tres tablas lógicas dibujadas en el plano (círculo azul = 0, triángulo rojo = 1). El «Y» y el «O» se separan con una recta; el XOR no, porque sus casos están cruzados. Abajo, una red con pesos puestos a mano: la neurona oculta h₁ calcula el «O» (basta una entrada en 1), h₂ calcula el «Y» (las dos en 1) y la salida responde 1 cuando h₁ está encendida y h₂ apagada. Dos rectas y una combinación hacen lo que una recta sola no puede.</figcaption></figure></section>
+<section><h2>Capas ocultas: de una recta a fronteras curvas</h2><div class="prose"><p>La solución del XOR muestra el truco de todas las redes: poner neuronas entre la entrada y la salida. Esas neuronas forman una <b>capa oculta</b> (<i>hidden layer</i>), oculta porque nadie le dice qué tiene que calcular: el entrenamiento lo decide. Cada neurona oculta traza su propia frontera sobre las entradas, y la neurona de salida combina esas fronteras. Si se agregan más capas ocultas, cada una trabaja sobre lo que calculó la anterior.</p></div><div class="analogia"><b>Imagínalo así</b><p>Con una regla y un lápiz solo puedes trazar rectas. Pero con varias rectas puedes recortar un triángulo, un hexágono, un polígono de cien lados que ya parece un círculo. Una capa oculta le da a la red varias reglas; la capa de salida decide qué recortes se suman y cuáles se restan.</p></div><div class="prose"><p>Una red así, con capas donde cada neurona recibe las salidas de <b>todas</b> las neuronas de la capa anterior, se llama <b>red densa</b> o <b>totalmente conectada</b> (<i>fully connected network</i>), y también <b>perceptrón multicapa</b> (<i>multilayer perceptron</i>, MLP), aunque sus neuronas ya no usen el escalón del perceptrón original. La información va siempre hacia adelante, de la entrada a la salida, sin volver atrás: por eso es una <b>red prealimentada</b> (<i>feedforward network</i>). El número de capas es la <b>profundidad</b> (<i>depth</i>) de la red y el número de neuronas de una capa es su <b>ancho</b> (<i>width</i>). De la profundidad viene el nombre del campo: <b>aprendizaje profundo</b> (<i>deep learning</i>) es aprender con redes de muchas capas.</p></div><div class="lab" id="01-lab-1"><div class="lab-title"><span class="tag">Laboratorio</span><h3>Una red que se entrena en la página: agrega capas y neuronas y mira cómo cambia la frontera de decisión</h3></div><p class="hint">Elige unos datos, el número de capas ocultas y de neuronas, y pulsa «Entrenar». La zona azul es donde la red responde «clase 0» y la roja, «clase 1»; la línea negra es la frontera. Empieza con el círculo y una capa de dos neuronas, sube a tres o cuatro, y después prueba la espiral con una sola capa y con tres.</p><style>
+[id="01-lab-1"] .c1l1-rot{font:700 .7rem var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px}
+[id="01-lab-1"] .btns{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+[id="01-lab-1"] .c1l1-graf{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:14px}
+[id="01-lab-1"] canvas{width:100%;display:block;border-radius:8px;touch-action:pan-y}
+[id="01-lab-1"] .c1l1-curva{background:var(--card);border:1px solid var(--line)}
+[id="01-lab-1"] .c1l1-ley{display:flex;flex-wrap:wrap;gap:4px 14px;font:500 .78rem var(--f-display);color:var(--muted);margin-top:4px}
+[id="01-lab-1"] .c1l1-ley b{display:inline-block;width:10px;height:10px;margin-right:4px;vertical-align:-1px}
+</style>
+<div class="opciones">
+  <label>Datos<select id="c1l1-datos"><option value="circulo">Un círculo dentro de otro</option><option value="xor">Cuadrantes (XOR)</option><option value="lunas">Dos lunas</option><option value="espiral">Espiral</option></select></label>
+  <label>Activación de las capas ocultas<select id="c1l1-act"><option value="tanh">tanh</option><option value="relu">ReLU</option></select></label>
+</div>
+<div class="btns" role="group" aria-label="Capas ocultas"><span class="c1l1-rot" style="margin:0">Capas ocultas</span>
+  <button type="button" data-capas="0" aria-pressed="false">0</button><button type="button" data-capas="1" aria-pressed="true">1</button><button type="button" data-capas="2" aria-pressed="false">2</button><button type="button" data-capas="3" aria-pressed="false">3</button>
+</div>
+<div class="ctls"><div class="ctl"><label for="c1l1-n">Neuronas en cada capa oculta</label><input type="range" id="c1l1-n" min="1" max="8" value="2" step="1"><output id="c1l1-nv">2</output></div></div>
+<div class="btns"><button type="button" class="primary" id="c1l1-go">Entrenar</button><button type="button" id="c1l1-reset">Reiniciar pesos</button></div>
+<div class="c1l1-graf">
+  <div><span class="c1l1-rot" id="c1l1-tit">La red y su frontera</span>
+    <canvas id="c1l1-plano" data-prop="1" aria-label="Plano con los puntos de dos clases y la zona que la red asigna a cada una; la línea negra es la frontera de decisión"></canvas>
+    <div class="c1l1-ley"><span><b style="background:var(--accent);border-radius:50%"></b>clase 0</span><span><b style="background:var(--warm);clip-path:polygon(50% 0,100% 100%,0 100%)"></b>clase 1</span><span><b style="background:var(--ink);height:2px"></b>frontera (p = 0,5)</span></div></div>
+  <div><span class="c1l1-rot">Pérdida durante el entrenamiento</span>
+    <canvas id="c1l1-curva" class="c1l1-curva" data-prop="0.62" aria-label="Curva de la pérdida en cada época"></canvas>
+    <span class="c1l1-rot" style="margin-top:10px">La red</span>
+    <canvas id="c1l1-red" data-prop="0.36" aria-label="Diagrama de la red: neuronas por capa y pesos, azules si son positivos y rojos si son negativos"></canvas></div>
+</div>
+<div class="readout texto" id="c1l1-out" aria-live="polite"></div></div><div class="prose"><p>En el laboratorio se ve la geometría. Con cero capas ocultas, la red es una sola neurona y la frontera es una recta, haga lo que haga el entrenamiento. Con una capa de dos neuronas, el círculo queda mal recortado; con tres o cuatro, la frontera ya lo rodea. La espiral necesita más: varias capas, porque cada capa dobla y recorta lo que le entrega la anterior. Fíjate también en la curva de pérdida: baja rápido al principio y después se aplana. Ese número es el error de la red, y el capítulo 2 explica cómo se calcula.</p></div></section>
+<section><h2>Funciones de activación: escalón, sigmoide, tanh, ReLU y sus parientes</h2><div class="prose"><p>La activación parece un detalle y es la pieza clave. Supón que se quita: cada neurona entrega su suma ponderada tal cual. Una capa calcula entonces una función lineal de las entradas, la siguiente calcula una función lineal de esa función lineal, y el resultado vuelve a ser lineal. Diez capas sin activación equivalen a una sola, y la frontera vuelve a ser una recta. La <b>no linealidad</b> (<i>nonlinearity</i>) entre capas es lo que impide que las capas se aplasten en una.</p></div><div class="analogia"><b>Imagínalo así</b><p>Doblar un papel es una operación lineal: si lo doblas diez veces sobre la misma línea, sigue siendo una línea. Las activaciones son los pliegues en ángulos distintos: cada uno cambia la forma de lo que viene después, y con suficientes pliegues haces una grulla de papel.</p></div><div class="prose"><p>Estas son las activaciones que vas a encontrar:</p><div class="tbl"><table><thead><tr><th>Activación</th><th>Fórmula</th><th>Salida</th><th>Dónde se usa</th></tr></thead><tbody><tr><td><b>Escalón</b> (<i>step</i>)</td><td>1 si <span class="math">z &gt; 0</span>, si no 0</td><td>0 o 1</td><td>El perceptrón original. No sirve para entrenar con gradientes: su pendiente es cero</td></tr><tr><td><b>Sigmoide</b> (<i>sigmoid</i>)</td><td><span class="math">\sigma(z) = \dfrac{1}{1 + e^{-z}}</span></td><td>de 0 a 1</td><td>La salida de una clasificación sí/no (capítulo 2). En capas ocultas, casi abandonada</td></tr><tr><td><b>Tangente hiperbólica</b> (<i>tanh</i>)</td><td><span class="math">\tanh(z)</span></td><td>de −1 a 1</td><td>Centrada en cero; clásica en redes recurrentes (capítulo 7)</td></tr><tr><td><b>ReLU</b> (<i>Rectified Linear Unit</i>, unidad lineal rectificada)</td><td><span class="math">\max(0, z)</span></td><td>de 0 a ∞</td><td>La opción por defecto en capas ocultas desde 2012</td></tr><tr><td><b>ReLU con fuga</b> (<i>leaky ReLU</i>)</td><td><span class="math">z</span> si <span class="math">z&gt;0</span>, si no <span class="math">0{,}01\,z</span></td><td>de −∞ a ∞</td><td>Como ReLU, pero con una pequeña pendiente para los negativos</td></tr><tr><td><b>GELU</b> (<i>Gaussian Error Linear Unit</i>)</td><td><span class="math">z\,\Phi(z)</span></td><td>desde ≈ −0,17</td><td>Una ReLU suave; la usan los Transformers</td></tr></tbody></table></div><p>La sigmoide fue la favorita durante décadas porque es suave y su salida se lee como una probabilidad. Tiene un defecto que el capítulo 3 explica a fondo: su pendiente nunca pasa de 0,25 y se hace casi cero lejos del centro, y en redes profundas eso frena el aprendizaje de las primeras capas. La ReLU es casi tonta (deja pasar lo positivo y anula lo negativo), pero es rapidísima de calcular, su pendiente vale 1 en toda la zona positiva y, en la práctica, entrena redes profundas mucho mejor. Se popularizó entre 2010 y 2012, y la red AlexNet, que ganó el concurso ImageNet en 2012, la usaba.</p></div><figure class="fig fig-comparacion" id="01-diagrama-3"><div class="lienzo"><svg viewBox="0 0 900 420" style="min-width:660px" role="img" aria-label="Seis funciones de activación dibujadas entre z = −4 y z = 4: escalón, sigmoide, tanh, ReLU, ReLU con fuga y GELU, con su rango de salida, su pendiente y dónde se usan">
+<rect x="20" y="20" width="280" height="186" rx="10" class="caja"/><text x="32" y="38" class="t t-xs t-b k-red">ESCALÓN</text><path d="M30 127.6H290M160.0 42V152" class="ln" style="stroke:var(--grid)"/><path d="M30.0 127.6L31.6 127.6L33.2 127.6L34.9 127.6L36.5 127.6L38.1 127.6L39.7 127.6L41.4 127.6L43.0 127.6L44.6 127.6L46.2 127.6L47.9 127.6L49.5 127.6L51.1 127.6L52.8 127.6L54.4 127.6L56.0 127.6L57.6 127.6L59.2 127.6L60.9 127.6L62.5 127.6L64.1 127.6L65.8 127.6L67.4 127.6L69.0 127.6L70.6 127.6L72.2 127.6L73.9 127.6L75.5 127.6L77.1 127.6L78.8 127.6L80.4 127.6L82.0 127.6L83.6 127.6L85.2 127.6L86.9 127.6L88.5 127.6L90.1 127.6L91.8 127.6L93.4 127.6L95.0 127.6L96.6 127.6L98.2 127.6L99.9 127.6L101.5 127.6L103.1 127.6L104.8 127.6L106.4 127.6L108.0 127.6L109.6 127.6L111.2 127.6L112.9 127.6L114.5 127.6L116.1 127.6L117.8 127.6L119.4 127.6L121.0 127.6L122.6 127.6L124.2 127.6L125.9 127.6L127.5 127.6L129.1 127.6L130.8 127.6L132.4 127.6L134.0 127.6L135.6 127.6L137.2 127.6L138.9 127.6L140.5 127.6L142.1 127.6L143.8 127.6L145.4 127.6L147.0 127.6L148.6 127.6L150.2 127.6L151.9 127.6L153.5 127.6L155.1 127.6L156.8 127.6L158.4 127.6L160.0 127.6L161.6 66.4L163.2 66.4L164.9 66.4L166.5 66.4L168.1 66.4L169.8 66.4L171.4 66.4L173.0 66.4L174.6 66.4L176.2 66.4L177.9 66.4L179.5 66.4L181.1 66.4L182.8 66.4L184.4 66.4L186.0 66.4L187.6 66.4L189.2 66.4L190.9 66.4L192.5 66.4L194.1 66.4L195.8 66.4L197.4 66.4L199.0 66.4L200.6 66.4L202.2 66.4L203.9 66.4L205.5 66.4L207.1 66.4L208.8 66.4L210.4 66.4L212.0 66.4L213.6 66.4L215.2 66.4L216.9 66.4L218.5 66.4L220.1 66.4L221.8 66.4L223.4 66.4L225.0 66.4L226.6 66.4L228.2 66.4L229.9 66.4L231.5 66.4L233.1 66.4L234.8 66.4L236.4 66.4L238.0 66.4L239.6 66.4L241.2 66.4L242.9 66.4L244.5 66.4L246.1 66.4L247.8 66.4L249.4 66.4L251.0 66.4L252.6 66.4L254.2 66.4L255.9 66.4L257.5 66.4L259.1 66.4L260.8 66.4L262.4 66.4L264.0 66.4L265.6 66.4L267.2 66.4L268.9 66.4L270.5 66.4L272.1 66.4L273.8 66.4L275.4 66.4L277.0 66.4L278.6 66.4L280.2 66.4L281.9 66.4L283.5 66.4L285.1 66.4L286.8 66.4L288.4 66.4L290.0 66.4" class="s-red" style="stroke-width:2.4;fill:none"/><text x="32" y="170" class="t t-s"><tspan class="t-b">Salida:</tspan> 0 o 1 · pendiente 0: no aprende</text><text x="32" y="190" class="t t-s t-m">Perceptrón (1958)</text><rect x="312" y="20" width="280" height="186" rx="10" class="caja"/><text x="324" y="38" class="t t-xs t-b k-red">SIGMOIDE</text><path d="M322 127.6H582M452.0 42V152" class="ln" style="stroke:var(--grid)"/><path d="M322.0 126.5L323.6 126.4L325.2 126.3L326.9 126.3L328.5 126.2L330.1 126.2L331.8 126.1L333.4 126.0L335.0 125.9L336.6 125.8L338.2 125.8L339.9 125.7L341.5 125.6L343.1 125.5L344.8 125.4L346.4 125.3L348.0 125.2L349.6 125.0L351.2 124.9L352.9 124.8L354.5 124.7L356.1 124.5L357.8 124.4L359.4 124.2L361.0 124.1L362.6 123.9L364.2 123.7L365.9 123.5L367.5 123.3L369.1 123.1L370.8 122.9L372.4 122.7L374.0 122.5L375.6 122.2L377.2 122.0L378.9 121.7L380.5 121.5L382.1 121.2L383.8 120.9L385.4 120.6L387.0 120.3L388.6 119.9L390.2 119.6L391.9 119.3L393.5 118.9L395.1 118.5L396.8 118.1L398.4 117.7L400.0 117.3L401.6 116.9L403.2 116.4L404.9 115.9L406.5 115.5L408.1 115.0L409.8 114.5L411.4 113.9L413.0 113.4L414.6 112.9L416.2 112.3L417.9 111.7L419.5 111.1L421.1 110.5L422.8 109.9L424.4 109.3L426.0 108.6L427.6 107.9L429.2 107.3L430.9 106.6L432.5 105.9L434.1 105.2L435.8 104.5L437.4 103.8L439.0 103.0L440.6 102.3L442.2 101.5L443.9 100.8L445.5 100.0L447.1 99.3L448.8 98.5L450.4 97.8L452.0 97.0L453.6 96.2L455.2 95.5L456.9 94.7L458.5 94.0L460.1 93.2L461.8 92.5L463.4 91.7L465.0 91.0L466.6 90.2L468.2 89.5L469.9 88.8L471.5 88.1L473.1 87.4L474.8 86.7L476.4 86.1L478.0 85.4L479.6 84.7L481.2 84.1L482.9 83.5L484.5 82.9L486.1 82.3L487.8 81.7L489.4 81.1L491.0 80.6L492.6 80.1L494.2 79.5L495.9 79.0L497.5 78.5L499.1 78.1L500.8 77.6L502.4 77.1L504.0 76.7L505.6 76.3L507.2 75.9L508.9 75.5L510.5 75.1L512.1 74.7L513.8 74.4L515.4 74.1L517.0 73.7L518.6 73.4L520.2 73.1L521.9 72.8L523.5 72.5L525.1 72.3L526.8 72.0L528.4 71.8L530.0 71.5L531.6 71.3L533.2 71.1L534.9 70.9L536.5 70.7L538.1 70.5L539.8 70.3L541.4 70.1L543.0 69.9L544.6 69.8L546.2 69.6L547.9 69.5L549.5 69.3L551.1 69.2L552.8 69.1L554.4 69.0L556.0 68.8L557.6 68.7L559.2 68.6L560.9 68.5L562.5 68.4L564.1 68.3L565.8 68.2L567.4 68.2L569.0 68.1L570.6 68.0L572.2 67.9L573.9 67.8L575.5 67.8L577.1 67.7L578.8 67.7L580.4 67.6L582.0 67.5" class="s-red" style="stroke-width:2.4;fill:none"/><text x="324" y="170" class="t t-s"><tspan class="t-b">Salida:</tspan> de 0 a 1 · pendiente máx. 0,25</text><text x="324" y="190" class="t t-s t-m">Salida sí/no</text><rect x="604" y="20" width="280" height="186" rx="10" class="caja"/><text x="616" y="38" class="t t-xs t-b k-red">TANH</text><path d="M614 97.0H874M744.0 42V152" class="ln" style="stroke:var(--grid)"/><path d="M614.0 136.3L615.6 136.3L617.2 136.3L618.9 136.3L620.5 136.2L622.1 136.2L623.8 136.2L625.4 136.2L627.0 136.2L628.6 136.2L630.2 136.2L631.9 136.2L633.5 136.2L635.1 136.2L636.8 136.2L638.4 136.2L640.0 136.2L641.6 136.1L643.2 136.1L644.9 136.1L646.5 136.1L648.1 136.1L649.8 136.0L651.4 136.0L653.0 136.0L654.6 136.0L656.2 135.9L657.9 135.9L659.5 135.9L661.1 135.8L662.8 135.8L664.4 135.7L666.0 135.6L667.6 135.6L669.2 135.5L670.9 135.4L672.5 135.3L674.1 135.2L675.8 135.1L677.4 135.0L679.0 134.9L680.6 134.7L682.2 134.6L683.9 134.4L685.5 134.2L687.1 134.0L688.8 133.7L690.4 133.5L692.0 133.2L693.6 132.9L695.2 132.6L696.9 132.2L698.5 131.8L700.1 131.3L701.8 130.9L703.4 130.3L705.0 129.8L706.6 129.1L708.2 128.4L709.9 127.7L711.5 126.9L713.1 126.1L714.8 125.1L716.4 124.1L718.0 123.1L719.6 122.0L721.2 120.7L722.9 119.5L724.5 118.1L726.1 116.7L727.8 115.2L729.4 113.6L731.0 111.9L732.6 110.2L734.2 108.4L735.9 106.6L737.5 104.8L739.1 102.8L740.8 100.9L742.4 99.0L744.0 97.0L745.6 95.0L747.2 93.1L748.9 91.2L750.5 89.2L752.1 87.4L753.8 85.6L755.4 83.8L757.0 82.1L758.6 80.4L760.2 78.8L761.9 77.3L763.5 75.9L765.1 74.5L766.8 73.3L768.4 72.0L770.0 70.9L771.6 69.9L773.2 68.9L774.9 67.9L776.5 67.1L778.1 66.3L779.8 65.6L781.4 64.9L783.0 64.2L784.6 63.7L786.2 63.1L787.9 62.7L789.5 62.2L791.1 61.8L792.8 61.4L794.4 61.1L796.0 60.8L797.6 60.5L799.2 60.3L800.9 60.0L802.5 59.8L804.1 59.6L805.8 59.4L807.4 59.3L809.0 59.1L810.6 59.0L812.2 58.9L813.9 58.8L815.5 58.7L817.1 58.6L818.8 58.5L820.4 58.4L822.0 58.4L823.6 58.3L825.2 58.2L826.9 58.2L828.5 58.1L830.1 58.1L831.8 58.1L833.4 58.0L835.0 58.0L836.6 58.0L838.2 58.0L839.9 57.9L841.5 57.9L843.1 57.9L844.8 57.9L846.4 57.9L848.0 57.8L849.6 57.8L851.2 57.8L852.9 57.8L854.5 57.8L856.1 57.8L857.8 57.8L859.4 57.8L861.0 57.8L862.6 57.8L864.2 57.8L865.9 57.8L867.5 57.8L869.1 57.7L870.8 57.7L872.4 57.7L874.0 57.7" class="s-red" style="stroke-width:2.4;fill:none"/><text x="616" y="170" class="t t-s"><tspan class="t-b">Salida:</tspan> de −1 a 1 · pendiente máx. 1</text><text x="616" y="190" class="t t-s t-m">Redes recurrentes</text><rect x="20" y="220" width="280" height="186" rx="10" class="caja"/><text x="32" y="238" class="t t-xs t-b k-red">RELU</text><path d="M30 338.5H290M160.0 242V352" class="ln" style="stroke:var(--grid)"/><path d="M30.0 338.5L31.6 338.5L33.2 338.5L34.9 338.5L36.5 338.5L38.1 338.5L39.7 338.5L41.4 338.5L43.0 338.5L44.6 338.5L46.2 338.5L47.9 338.5L49.5 338.5L51.1 338.5L52.8 338.5L54.4 338.5L56.0 338.5L57.6 338.5L59.2 338.5L60.9 338.5L62.5 338.5L64.1 338.5L65.8 338.5L67.4 338.5L69.0 338.5L70.6 338.5L72.2 338.5L73.9 338.5L75.5 338.5L77.1 338.5L78.8 338.5L80.4 338.5L82.0 338.5L83.6 338.5L85.2 338.5L86.9 338.5L88.5 338.5L90.1 338.5L91.8 338.5L93.4 338.5L95.0 338.5L96.6 338.5L98.2 338.5L99.9 338.5L101.5 338.5L103.1 338.5L104.8 338.5L106.4 338.5L108.0 338.5L109.6 338.5L111.2 338.5L112.9 338.5L114.5 338.5L116.1 338.5L117.8 338.5L119.4 338.5L121.0 338.5L122.6 338.5L124.2 338.5L125.9 338.5L127.5 338.5L129.1 338.5L130.8 338.5L132.4 338.5L134.0 338.5L135.6 338.5L137.2 338.5L138.9 338.5L140.5 338.5L142.1 338.5L143.8 338.5L145.4 338.5L147.0 338.5L148.6 338.5L150.2 338.5L151.9 338.5L153.5 338.5L155.1 338.5L156.8 338.5L158.4 338.5L160.0 338.5L161.6 337.4L163.2 336.3L164.9 335.2L166.5 334.0L168.1 332.9L169.8 331.8L171.4 330.7L173.0 329.6L174.6 328.4L176.2 327.3L177.9 326.2L179.5 325.1L181.1 323.9L182.8 322.8L184.4 321.7L186.0 320.6L187.6 319.4L189.2 318.3L190.9 317.2L192.5 316.1L194.1 315.0L195.8 313.8L197.4 312.7L199.0 311.6L200.6 310.5L202.2 309.3L203.9 308.2L205.5 307.1L207.1 306.0L208.8 304.9L210.4 303.7L212.0 302.6L213.6 301.5L215.2 300.4L216.9 299.2L218.5 298.1L220.1 297.0L221.8 295.9L223.4 294.8L225.0 293.6L226.6 292.5L228.2 291.4L229.9 290.3L231.5 289.1L233.1 288.0L234.8 286.9L236.4 285.8L238.0 284.7L239.6 283.5L241.2 282.4L242.9 281.3L244.5 280.2L246.1 279.0L247.8 277.9L249.4 276.8L251.0 275.7L252.6 274.6L254.2 273.4L255.9 272.3L257.5 271.2L259.1 270.1L260.8 268.9L262.4 267.8L264.0 266.7L265.6 265.6L267.2 264.4L268.9 263.3L270.5 262.2L272.1 261.1L273.8 260.0L275.4 258.8L277.0 257.7L278.6 256.6L280.2 255.5L281.9 254.3L283.5 253.2L285.1 252.1L286.8 251.0L288.4 249.9L290.0 248.7" class="s-red" style="stroke-width:2.4;fill:none"/><text x="32" y="370" class="t t-s"><tspan class="t-b">Salida:</tspan> de 0 a ∞ · pendiente 0 o 1</text><text x="32" y="390" class="t t-s t-m">Por defecto hoy</text><rect x="312" y="220" width="280" height="186" rx="10" class="caja"/><text x="324" y="238" class="t t-xs t-b k-red">RELU CON FUGA</text><path d="M322 338.5H582M452.0 242V352" class="ln" style="stroke:var(--grid)"/><path d="M322.0 347.5L323.6 347.4L325.2 347.3L326.9 347.2L328.5 347.1L330.1 346.9L331.8 346.8L333.4 346.7L335.0 346.6L336.6 346.5L338.2 346.4L339.9 346.3L341.5 346.2L343.1 346.1L344.8 345.9L346.4 345.8L348.0 345.7L349.6 345.6L351.2 345.5L352.9 345.4L354.5 345.3L356.1 345.2L357.8 345.0L359.4 344.9L361.0 344.8L362.6 344.7L364.2 344.6L365.9 344.5L367.5 344.4L369.1 344.3L370.8 344.1L372.4 344.0L374.0 343.9L375.6 343.8L377.2 343.7L378.9 343.6L380.5 343.5L382.1 343.4L383.8 343.2L385.4 343.1L387.0 343.0L388.6 342.9L390.2 342.8L391.9 342.7L393.5 342.6L395.1 342.5L396.8 342.3L398.4 342.2L400.0 342.1L401.6 342.0L403.2 341.9L404.9 341.8L406.5 341.7L408.1 341.6L409.8 341.4L411.4 341.3L413.0 341.2L414.6 341.1L416.2 341.0L417.9 340.9L419.5 340.8L421.1 340.7L422.8 340.6L424.4 340.4L426.0 340.3L427.6 340.2L429.2 340.1L430.9 340.0L432.5 339.9L434.1 339.8L435.8 339.7L437.4 339.5L439.0 339.4L440.6 339.3L442.2 339.2L443.9 339.1L445.5 339.0L447.1 338.9L448.8 338.8L450.4 338.6L452.0 338.5L453.6 337.4L455.2 336.3L456.9 335.2L458.5 334.0L460.1 332.9L461.8 331.8L463.4 330.7L465.0 329.6L466.6 328.4L468.2 327.3L469.9 326.2L471.5 325.1L473.1 323.9L474.8 322.8L476.4 321.7L478.0 320.6L479.6 319.4L481.2 318.3L482.9 317.2L484.5 316.1L486.1 315.0L487.8 313.8L489.4 312.7L491.0 311.6L492.6 310.5L494.2 309.3L495.9 308.2L497.5 307.1L499.1 306.0L500.8 304.9L502.4 303.7L504.0 302.6L505.6 301.5L507.2 300.4L508.9 299.2L510.5 298.1L512.1 297.0L513.8 295.9L515.4 294.8L517.0 293.6L518.6 292.5L520.2 291.4L521.9 290.3L523.5 289.1L525.1 288.0L526.8 286.9L528.4 285.8L530.0 284.7L531.6 283.5L533.2 282.4L534.9 281.3L536.5 280.2L538.1 279.0L539.8 277.9L541.4 276.8L543.0 275.7L544.6 274.6L546.2 273.4L547.9 272.3L549.5 271.2L551.1 270.1L552.8 268.9L554.4 267.8L556.0 266.7L557.6 265.6L559.2 264.4L560.9 263.3L562.5 262.2L564.1 261.1L565.8 260.0L567.4 258.8L569.0 257.7L570.6 256.6L572.2 255.5L573.9 254.3L575.5 253.2L577.1 252.1L578.8 251.0L580.4 249.9L582.0 248.7" class="s-red" style="stroke-width:2.4;fill:none"/><text x="324" y="370" class="t t-s"><tspan class="t-b">Salida:</tspan> de −∞ a ∞ · pendiente 0,01 o 1</text><text x="324" y="390" class="t t-s t-m">Evita neuronas muertas</text><rect x="604" y="220" width="280" height="186" rx="10" class="caja"/><text x="616" y="238" class="t t-xs t-b k-red">GELU</text><path d="M614 338.5H874M744.0 242V352" class="ln" style="stroke:var(--grid)"/><path d="M614.0 338.5L615.6 338.5L617.2 338.5L618.9 338.5L620.5 338.5L622.1 338.5L623.8 338.5L625.4 338.5L627.0 338.5L628.6 338.5L630.2 338.5L631.9 338.6L633.5 338.6L635.1 338.6L636.8 338.6L638.4 338.6L640.0 338.6L641.6 338.6L643.2 338.6L644.9 338.6L646.5 338.6L648.1 338.6L649.8 338.7L651.4 338.7L653.0 338.7L654.6 338.7L656.2 338.7L657.9 338.8L659.5 338.8L661.1 338.8L662.8 338.9L664.4 338.9L666.0 339.0L667.6 339.0L669.2 339.1L670.9 339.1L672.5 339.2L674.1 339.3L675.8 339.4L677.4 339.5L679.0 339.6L680.6 339.7L682.2 339.8L683.9 339.9L685.5 340.0L687.1 340.1L688.8 340.2L690.4 340.4L692.0 340.5L693.6 340.6L695.2 340.8L696.9 340.9L698.5 341.1L700.1 341.2L701.8 341.4L703.4 341.5L705.0 341.6L706.6 341.8L708.2 341.9L709.9 342.0L711.5 342.1L713.1 342.2L714.8 342.2L716.4 342.3L718.0 342.3L719.6 342.3L721.2 342.3L722.9 342.3L724.5 342.2L726.1 342.1L727.8 342.0L729.4 341.8L731.0 341.6L732.6 341.4L734.2 341.1L735.9 340.8L737.5 340.4L739.1 340.0L740.8 339.6L742.4 339.1L744.0 338.5L745.6 337.9L747.2 337.3L748.9 336.6L750.5 335.9L752.1 335.2L753.8 334.4L755.4 333.5L757.0 332.6L758.6 331.7L760.2 330.8L761.9 329.8L763.5 328.8L765.1 327.7L766.8 326.6L768.4 325.5L770.0 324.4L771.6 323.2L773.2 322.0L774.9 320.9L776.5 319.6L778.1 318.4L779.8 317.2L781.4 315.9L783.0 314.7L784.6 313.4L786.2 312.2L787.9 310.9L789.5 309.6L791.1 308.4L792.8 307.1L794.4 305.8L796.0 304.6L797.6 303.3L799.2 302.1L800.9 300.8L802.5 299.6L804.1 298.3L805.8 297.1L807.4 295.9L809.0 294.7L810.6 293.4L812.2 292.2L813.9 291.0L815.5 289.8L817.1 288.6L818.8 287.5L820.4 286.3L822.0 285.1L823.6 283.9L825.2 282.8L826.9 281.6L828.5 280.4L830.1 279.3L831.8 278.1L833.4 277.0L835.0 275.8L836.6 274.7L838.2 273.6L839.9 272.4L841.5 271.3L843.1 270.1L844.8 269.0L846.4 267.9L848.0 266.7L849.6 265.6L851.2 264.5L852.9 263.4L854.5 262.2L856.1 261.1L857.8 260.0L859.4 258.9L861.0 257.7L862.6 256.6L864.2 255.5L865.9 254.4L867.5 253.2L869.1 252.1L870.8 251.0L872.4 249.9L874.0 248.7" class="s-red" style="stroke-width:2.4;fill:none"/><text x="616" y="370" class="t t-s"><tspan class="t-b">Salida:</tspan> ≈ −0,17 a ∞ · suave cerca del 0</text><text x="616" y="390" class="t t-s t-m">Transformers</text>
+</svg></div><figcaption><b>Seis funciones de activación.</b> Cada panel dibuja la función entre z = −4 y z = 4, con los ejes en gris. Debajo, el rango de la salida, cómo es su pendiente y dónde se usa. El escalón es plano en todas partes salvo en el salto; la sigmoide y tanh son eses suaves que se aplanan en los extremos; ReLU, ReLU con fuga y GELU son casi una recta en la zona positiva. Esa diferencia de pendientes decide qué tan bien aprende una red profunda.</figcaption></figure><div class="lab" id="01-lab-3"><div class="lab-title"><span class="tag">Laboratorio</span><h3>Cambia la activación de ReLU a sigmoide y compara la forma de la frontera</h3></div><p class="hint">Las dos redes tienen la misma forma (2 → 8 → 8 → 1), los mismos pesos iniciales y el mismo optimizador; solo cambia la activación de las capas ocultas. Entrena las dos y compara. Después elige «Lineal» en el panel derecho y mira qué pasa con el círculo; termina con «Escalón».</p><style>
+[id="01-lab-3"] .c1l3-rot{font:700 .7rem var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px}
+[id="01-lab-3"] .btns{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+[id="01-lab-3"] .c1l3-graf{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:16px}
+[id="01-lab-3"] canvas{width:100%;display:block;border-radius:8px}
+[id="01-lab-3"] .c1l3-f{background:var(--card);border:1px solid var(--line);margin-bottom:6px}
+[id="01-lab-3"] .c1l3-dato{font:500 .82rem var(--f-mono);color:var(--muted);margin-top:4px}
+</style>
+<div class="opciones">
+  <label>Datos<select id="c1l3-datos"><option value="circulo">Un círculo dentro de otro</option><option value="espiral">Espiral</option><option value="lunas">Dos lunas</option></select></label>
+  <label>Activación del panel derecho<select id="c1l3-act"><option value="sigmoide">Sigmoide</option><option value="tanh">tanh</option><option value="fuga">ReLU con fuga</option><option value="lineal">Lineal (sin activación)</option><option value="escalon">Escalón</option></select></label>
+</div>
+<div class="btns"><button type="button" class="primary" id="c1l3-go">Entrenar las dos</button><button type="button" id="c1l3-reset">Reiniciar</button><span class="c1l3-dato">Red 2 → 8 → 8 → 1, mismos pesos iniciales, mismo optimizador</span></div>
+<div class="c1l3-graf">
+  <div><span class="c1l3-rot">Izquierda: ReLU</span><canvas id="c1l3-fa" class="c1l3-f" data-prop="0.3" aria-label="Forma de la función ReLU"></canvas>
+    <canvas id="c1l3-pa" data-prop="1" aria-label="Frontera de la red con ReLU"></canvas><div class="c1l3-dato" id="c1l3-da"></div></div>
+  <div><span class="c1l3-rot" id="c1l3-tb">Derecha: sigmoide</span><canvas id="c1l3-fb" class="c1l3-f" data-prop="0.3" aria-label="Forma de la función de activación elegida"></canvas>
+    <canvas id="c1l3-pb" data-prop="1" aria-label="Frontera de la red con la activación elegida"></canvas><div class="c1l3-dato" id="c1l3-db"></div></div>
+</div>
+<div class="readout texto" id="c1l3-out" aria-live="polite"></div></div><div class="prose"><p>Con ReLU, la frontera es un polígono: cada neurona aporta un pliegue recto y la red los pega. Con sigmoide o tanh, la frontera es curva y suave. Con la activación lineal no hay forma de rodear el círculo, por más neuronas que tenga la red. Y con el escalón la red casi no aprende, aunque tenga la misma forma: como su pendiente es cero, el método de entrenamiento del capítulo 3 no recibe ninguna pista sobre hacia dónde corregir las capas ocultas. Esa es la razón por la que se abandonó el escalón de Rosenblatt.</p></div></section>
+<section><h2>La red como una función con miles de perillas</h2><div class="prose"><p>Visto de lejos, una red es una función: recibe 196 números (una imagen) y devuelve 10 (un puntaje por dígito). Lo que la define son sus pesos y sesgos, que en conjunto se llaman <b>parámetros</b> (<i>parameters</i>). Cada parámetro es una perilla: girarla cambia un poco lo que la red responde. <b>Entrenar</b> (<i>training</i>) es buscar la posición de todas las perillas que hace que la red acierte con los ejemplos.</p></div><div class="analogia"><b>Imagínalo así</b><p>Imagina una consola de sonido con 13.258 perillas y una canción que suena mal. Nadie podría ajustarlas a oído una por una. Lo que hace el entrenamiento es medir qué tan mal suena (capítulo 2), averiguar hacia dónde conviene girar cada perilla para que suene un poco mejor (capítulo 3), girarlas todas a la vez un poquito (capítulo 4) y repetir miles de veces.</p></div><div class="prose"><p>La red de referencia del curso tiene la forma 196 → 64 → 10. La capa oculta tiene 64 neuronas y cada una recibe los 196 píxeles, así que tiene 196 × 64 = 12.544 pesos más 64 sesgos. La salida tiene 10 neuronas que reciben las 64 activaciones ocultas: 64 × 10 = 640 pesos más 10 sesgos. En total, <b>13.258 parámetros</b>. No es mucho: los modelos de lenguaje actuales tienen miles de millones.</p><p>Distinto de los parámetros son los <b>hiperparámetros</b> (<i>hyperparameters</i>): las decisiones que se toman antes de entrenar y que el entrenamiento no cambia, como el número de capas, el ancho, la activación o la tasa de aprendizaje. Los parámetros los aprende la red; los hiperparámetros los elige Paula.</p><p>Hay una forma compacta de escribir lo que hace una capa entera. Si los 196 píxeles forman el vector <span class="math">\mathbf{x}</span>, los pesos de la capa forman una matriz <span class="math">W</span> de 64 filas (una por neurona) y 196 columnas, y los sesgos forman el vector <span class="math">\mathbf{b}</span>, entonces las 64 sumas ponderadas son el producto <span class="math">W\mathbf{x} + \mathbf{b}</span>, y las activaciones son <span class="math">\mathbf{a} = f(W\mathbf{x} + \mathbf{b})</span>, aplicando <span class="math">f</span> a cada número. La red completa es una composición de funciones: <span class="math">\text{salida} = g(W_2\, f(W_1 \mathbf{x} + \mathbf{b}_1) + \mathbf{b}_2)</span>. Calcular la salida a partir de la entrada, capa por capa, se llama <b>pase hacia adelante</b> (<i>forward pass</i>). Por eso las redes son, por dentro, multiplicaciones de matrices, y por eso corren tan rápido en las <b>GPU</b> (<i>Graphics Processing Unit</i>, unidad de procesamiento gráfico), chips hechos para multiplicar matrices. El repaso de vectores y matrices está en <a href="https://aaramirez.github.io/mate/" target="_blank" rel="noopener">Mate para ML</a> y la teoría completa, en <a href="https://aaramirez.github.io/mate-algebra-lineal/temario.html" target="_blank" rel="noopener">Álgebra lineal</a>.</p></div><figure class="fig fig-arquitectura" id="01-diagrama-4"><div class="lienzo"><svg viewBox="0 0 900 400" style="min-width:660px" role="img" aria-label="La red densa de referencia del curso: una imagen de 14 por 14 píxeles se aplana en 196 entradas, pasa por 64 neuronas ocultas con ReLU y sale por 10 neuronas con softmax, una por dígito; este 4 recibe la mayor probabilidad en la salida 4">
+<defs><marker id="c1d4-m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="fl-muted"/></marker></defs>
+<text x="30" y="40" class="t t-xs t-b k-sis">IMAGEN DE 14 × 14</text>
+<text x="30" y="56" class="t t-s t-m">un 4 de la muestra</text>
+<rect x="30" y="70" width="140" height="140" class="caja" style="fill:none"/>
+<rect x="90" y="100" width="10" height="10" style="fill:var(--ink);fill-opacity:0.27"/><rect x="100" y="100" width="10" height="10" style="fill:var(--ink);fill-opacity:0.13"/><rect x="130" y="100" width="10" height="10" style="fill:var(--ink);fill-opacity:0.13"/><rect x="140" y="100" width="10" height="10" style="fill:var(--ink);fill-opacity:0.20"/><rect x="80" y="110" width="10" height="10" style="fill:var(--ink);fill-opacity:0.47"/><rect x="90" y="110" width="10" height="10" style="fill:var(--ink);fill-opacity:0.93"/><rect x="100" y="110" width="10" height="10" style="fill:var(--ink);fill-opacity:0.20"/><rect x="120" y="110" width="10" height="10" style="fill:var(--ink);fill-opacity:0.47"/><rect x="130" y="110" width="10" height="10" style="fill:var(--ink);fill-opacity:0.93"/><rect x="140" y="110" width="10" height="10" style="fill:var(--ink);fill-opacity:0.73"/><rect x="60" y="120" width="10" height="10" style="fill:var(--ink);fill-opacity:0.07"/><rect x="70" y="120" width="10" height="10" style="fill:var(--ink);fill-opacity:0.60"/><rect x="80" y="120" width="10" height="10" style="fill:var(--ink);fill-opacity:0.93"/><rect x="90" y="120" width="10" height="10" style="fill:var(--ink);fill-opacity:0.27"/><rect x="110" y="120" width="10" height="10" style="fill:var(--ink);fill-opacity:0.27"/><rect x="120" y="120" width="10" height="10" style="fill:var(--ink);fill-opacity:1.00"/><rect x="130" y="120" width="10" height="10" style="fill:var(--ink);fill-opacity:0.27"/><rect x="50" y="130" width="10" height="10" style="fill:var(--ink);fill-opacity:0.07"/><rect x="60" y="130" width="10" height="10" style="fill:var(--ink);fill-opacity:0.80"/><rect x="70" y="130" width="10" height="10" style="fill:var(--ink);fill-opacity:0.87"/><rect x="80" y="130" width="10" height="10" style="fill:var(--ink);fill-opacity:0.27"/><rect x="110" y="130" width="10" height="10" style="fill:var(--ink);fill-opacity:0.67"/><rect x="120" y="130" width="10" height="10" style="fill:var(--ink);fill-opacity:0.67"/><rect x="50" y="140" width="10" height="10" style="fill:var(--ink);fill-opacity:0.80"/><rect x="60" y="140" width="10" height="10" style="fill:var(--ink);fill-opacity:0.93"/><rect x="70" y="140" width="10" height="10" style="fill:var(--ink);fill-opacity:0.13"/><rect x="110" y="140" width="10" height="10" style="fill:var(--ink);fill-opacity:0.80"/><rect x="120" y="140" width="10" height="10" style="fill:var(--ink);fill-opacity:0.40"/><rect x="50" y="150" width="10" height="10" style="fill:var(--ink);fill-opacity:0.67"/><rect x="60" y="150" width="10" height="10" style="fill:var(--ink);fill-opacity:1.00"/><rect x="70" y="150" width="10" height="10" style="fill:var(--ink);fill-opacity:0.87"/><rect x="80" y="150" width="10" height="10" style="fill:var(--ink);fill-opacity:0.67"/><rect x="90" y="150" width="10" height="10" style="fill:var(--ink);fill-opacity:0.67"/><rect x="100" y="150" width="10" height="10" style="fill:var(--ink);fill-opacity:0.53"/><rect x="110" y="150" width="10" height="10" style="fill:var(--ink);fill-opacity:1.00"/><rect x="120" y="150" width="10" height="10" style="fill:var(--ink);fill-opacity:0.47"/><rect x="130" y="150" width="10" height="10" style="fill:var(--ink);fill-opacity:0.20"/><rect x="60" y="160" width="10" height="10" style="fill:var(--ink);fill-opacity:0.07"/><rect x="70" y="160" width="10" height="10" style="fill:var(--ink);fill-opacity:0.27"/><rect x="80" y="160" width="10" height="10" style="fill:var(--ink);fill-opacity:0.47"/><rect x="90" y="160" width="10" height="10" style="fill:var(--ink);fill-opacity:0.47"/><rect x="100" y="160" width="10" height="10" style="fill:var(--ink);fill-opacity:0.67"/><rect x="110" y="160" width="10" height="10" style="fill:var(--ink);fill-opacity:0.93"/><rect x="120" y="160" width="10" height="10" style="fill:var(--ink);fill-opacity:0.53"/><rect x="130" y="160" width="10" height="10" style="fill:var(--ink);fill-opacity:0.73"/><rect x="140" y="160" width="10" height="10" style="fill:var(--ink);fill-opacity:0.27"/><rect x="100" y="170" width="10" height="10" style="fill:var(--ink);fill-opacity:0.47"/><rect x="110" y="170" width="10" height="10" style="fill:var(--ink);fill-opacity:0.47"/><rect x="100" y="180" width="10" height="10" style="fill:var(--ink);fill-opacity:0.67"/><rect x="110" y="180" width="10" height="10" style="fill:var(--ink);fill-opacity:0.13"/><rect x="100" y="190" width="10" height="10" style="fill:var(--ink);fill-opacity:0.07"/>
+<path d="M178 140H270" class="ln" marker-end="url(#c1d4-m)"/>
+<text x="224" y="130" text-anchor="middle" class="t t-xs t-m">aplanar</text>
+<text x="292" y="30" text-anchor="middle" class="t t-xs t-b k-sis">196 ENTRADAS</text>
+<path d="M301 60L460 50M301 60L460 76M301 60L460 102M301 60L460 128M301 60L460 154M301 60L460 206M301 60L460 232M301 60L460 258M301 60L460 284M301 60L460 310M301 90L460 50M301 90L460 76M301 90L460 102M301 90L460 128M301 90L460 154M301 90L460 206M301 90L460 232M301 90L460 258M301 90L460 284M301 90L460 310M301 120L460 50M301 120L460 76M301 120L460 102M301 120L460 128M301 120L460 154M301 120L460 206M301 120L460 232M301 120L460 258M301 120L460 284M301 120L460 310M301 150L460 50M301 150L460 76M301 150L460 102M301 150L460 128M301 150L460 154M301 150L460 206M301 150L460 232M301 150L460 258M301 150L460 284M301 150L460 310M301 210L460 50M301 210L460 76M301 210L460 102M301 210L460 128M301 210L460 154M301 210L460 206M301 210L460 232M301 210L460 258M301 210L460 284M301 210L460 310M301 240L460 50M301 240L460 76M301 240L460 102M301 240L460 128M301 240L460 154M301 240L460 206M301 240L460 232M301 240L460 258M301 240L460 284M301 240L460 310M301 270L460 50M301 270L460 76M301 270L460 102M301 270L460 128M301 270L460 154M301 270L460 206M301 270L460 232M301 270L460 258M301 270L460 284M301 270L460 310M301 300L460 50M301 300L460 76M301 300L460 102M301 300L460 128M301 300L460 154M301 300L460 206M301 300L460 232M301 300L460 258M301 300L460 284M301 300L460 310" class="ln" style="stroke-width:.5;opacity:.45"/>
+<path d="M480 50L640 52M480 50L640 80M480 50L640 108M480 50L640 136M480 50L640 164M480 50L640 192M480 50L640 220M480 50L640 248M480 50L640 276M480 50L640 304M480 76L640 52M480 76L640 80M480 76L640 108M480 76L640 136M480 76L640 164M480 76L640 192M480 76L640 220M480 76L640 248M480 76L640 276M480 76L640 304M480 102L640 52M480 102L640 80M480 102L640 108M480 102L640 136M480 102L640 164M480 102L640 192M480 102L640 220M480 102L640 248M480 102L640 276M480 102L640 304M480 128L640 52M480 128L640 80M480 128L640 108M480 128L640 136M480 128L640 164M480 128L640 192M480 128L640 220M480 128L640 248M480 128L640 276M480 128L640 304M480 154L640 52M480 154L640 80M480 154L640 108M480 154L640 136M480 154L640 164M480 154L640 192M480 154L640 220M480 154L640 248M480 154L640 276M480 154L640 304M480 206L640 52M480 206L640 80M480 206L640 108M480 206L640 136M480 206L640 164M480 206L640 192M480 206L640 220M480 206L640 248M480 206L640 276M480 206L640 304M480 232L640 52M480 232L640 80M480 232L640 108M480 232L640 136M480 232L640 164M480 232L640 192M480 232L640 220M480 232L640 248M480 232L640 276M480 232L640 304M480 258L640 52M480 258L640 80M480 258L640 108M480 258L640 136M480 258L640 164M480 258L640 192M480 258L640 220M480 258L640 248M480 258L640 276M480 258L640 304M480 284L640 52M480 284L640 80M480 284L640 108M480 284L640 136M480 284L640 164M480 284L640 192M480 284L640 220M480 284L640 248M480 284L640 276M480 284L640 304M480 310L640 52M480 310L640 80M480 310L640 108M480 310L640 136M480 310L640 164M480 310L640 192M480 310L640 220M480 310L640 248M480 310L640 276M480 310L640 304" class="ln" style="stroke-width:.5;opacity:.45"/>
+<circle cx="292" cy="60" r="9" class="d-sis"/><circle cx="292" cy="90" r="9" class="d-sis"/><circle cx="292" cy="120" r="9" class="d-sis"/><circle cx="292" cy="150" r="9" class="d-sis"/><text x="292" y="185" text-anchor="middle" class="t t-b t-m">⋮</text><circle cx="292" cy="210" r="9" class="d-sis"/><circle cx="292" cy="240" r="9" class="d-sis"/><circle cx="292" cy="270" r="9" class="d-sis"/><circle cx="292" cy="300" r="9" class="d-sis"/>
+<text x="470" y="30" text-anchor="middle" class="t t-xs t-b k-red">64 OCULTAS · RELU</text>
+<circle cx="470" cy="50" r="10" class="c-red"/><circle cx="470" cy="50" r="7" style="fill:var(--good);fill-opacity:0.02"/><circle cx="470" cy="76" r="10" class="c-red"/><circle cx="470" cy="76" r="7" style="fill:var(--good);fill-opacity:0.63"/><circle cx="470" cy="102" r="10" class="c-red"/><circle cx="470" cy="102" r="7" style="fill:var(--good);fill-opacity:0.00"/><circle cx="470" cy="128" r="10" class="c-red"/><circle cx="470" cy="128" r="7" style="fill:var(--good);fill-opacity:0.10"/><circle cx="470" cy="154" r="10" class="c-red"/><circle cx="470" cy="154" r="7" style="fill:var(--good);fill-opacity:0.00"/><text x="470" y="185" text-anchor="middle" class="t t-b t-m">⋮</text><circle cx="470" cy="206" r="10" class="c-red"/><circle cx="470" cy="206" r="7" style="fill:var(--good);fill-opacity:0.00"/><circle cx="470" cy="232" r="10" class="c-red"/><circle cx="470" cy="232" r="7" style="fill:var(--good);fill-opacity:0.40"/><circle cx="470" cy="258" r="10" class="c-red"/><circle cx="470" cy="258" r="7" style="fill:var(--good);fill-opacity:0.00"/><circle cx="470" cy="284" r="10" class="c-red"/><circle cx="470" cy="284" r="7" style="fill:var(--good);fill-opacity:0.00"/><circle cx="470" cy="310" r="10" class="c-red"/><circle cx="470" cy="310" r="7" style="fill:var(--good);fill-opacity:0.00"/>
+<text x="650" y="30" text-anchor="middle" class="t t-xs t-b k-apl">10 SALIDAS · SOFTMAX</text>
+<circle cx="650" cy="52" r="10" class="caja"/><text x="650" y="56" text-anchor="middle" class="t t-xs t-b">0</text><rect x="672" y="45" width="1.5" height="14" rx="3" style="fill:var(--c-apl);fill-opacity:0.35"/><text x="679.5" y="56" class="t t-xs t-mono">0,0 %</text><circle cx="650" cy="80" r="10" class="caja"/><text x="650" y="84" text-anchor="middle" class="t t-xs t-b">1</text><rect x="672" y="73" width="1.5" height="14" rx="3" style="fill:var(--c-apl);fill-opacity:0.35"/><text x="679.5" y="84" class="t t-xs t-mono">0,0 %</text><circle cx="650" cy="108" r="10" class="caja"/><text x="650" y="112" text-anchor="middle" class="t t-xs t-b">2</text><rect x="672" y="101" width="1.5" height="14" rx="3" style="fill:var(--c-apl);fill-opacity:0.35"/><text x="679.5" y="112" class="t t-xs t-mono">0,1 %</text><circle cx="650" cy="136" r="10" class="caja"/><text x="650" y="140" text-anchor="middle" class="t t-xs t-b">3</text><rect x="672" y="129" width="1.5" height="14" rx="3" style="fill:var(--c-apl);fill-opacity:0.35"/><text x="679.5" y="140" class="t t-xs t-mono">0,0 %</text><circle cx="650" cy="164" r="10" class="c-apl"/><text x="650" y="168" text-anchor="middle" class="t t-xs t-b">4</text><rect x="672" y="157" width="149.4" height="14" rx="3" style="fill:var(--c-apl);fill-opacity:1.0"/><text x="827.4" y="168" class="t t-xs t-mono">99,6 %</text><circle cx="650" cy="192" r="10" class="caja"/><text x="650" y="196" text-anchor="middle" class="t t-xs t-b">5</text><rect x="672" y="185" width="1.5" height="14" rx="3" style="fill:var(--c-apl);fill-opacity:0.35"/><text x="679.5" y="196" class="t t-xs t-mono">0,1 %</text><circle cx="650" cy="220" r="10" class="caja"/><text x="650" y="224" text-anchor="middle" class="t t-xs t-b">6</text><rect x="672" y="213" width="1.5" height="14" rx="3" style="fill:var(--c-apl);fill-opacity:0.35"/><text x="679.5" y="224" class="t t-xs t-mono">0,1 %</text><circle cx="650" cy="248" r="10" class="caja"/><text x="650" y="252" text-anchor="middle" class="t t-xs t-b">7</text><rect x="672" y="241" width="1.5" height="14" rx="3" style="fill:var(--c-apl);fill-opacity:0.35"/><text x="679.5" y="252" class="t t-xs t-mono">0,0 %</text><circle cx="650" cy="276" r="10" class="caja"/><text x="650" y="280" text-anchor="middle" class="t t-xs t-b">8</text><rect x="672" y="269" width="1.5" height="14" rx="3" style="fill:var(--c-apl);fill-opacity:0.35"/><text x="679.5" y="280" class="t t-xs t-mono">0,0 %</text><circle cx="650" cy="304" r="10" class="caja"/><text x="650" y="308" text-anchor="middle" class="t t-xs t-b">9</text><rect x="672" y="297" width="1.5" height="14" rx="3" style="fill:var(--c-apl);fill-opacity:0.35"/><text x="679.5" y="308" class="t t-xs t-mono">0,1 %</text>
+<text x="30" y="350" class="t t-s"><tspan class="t-b">Pesos:</tspan> 196 × 64 + 64 = 12.608 · 64 × 10 + 10 = 650 · total 13.258</text>
+<text x="30" y="372" class="t t-s t-m">El verde de cada neurona oculta es su activación con este dígito; 28 de las 64 se encienden.</text>
+<text x="30" y="392" class="t t-s t-m">Con los 60.000 dígitos de MNIST esta red acierta el 97,1 % de los 10.000 de prueba.</text>
+</svg></div><figcaption><b>La red densa de referencia del curso, con un dígito real.</b> A la izquierda, un 4 de la muestra en 14 × 14 píxeles. Se aplana en una fila de 196 entradas (naranja), que llegan a las 64 neuronas ocultas (azul); el verde dentro de cada una es su activación con este dígito. Las 10 neuronas de salida (rosa), una por dígito, terminan en una softmax que reparte la probabilidad: el 4 se lleva el 99,6 %. Abajo, la cuenta de los 13.258 parámetros.</figcaption></figure></section>
+<section><h2>El aproximador universal: qué promete y qué no</h2><div class="prose"><p>Si una capa oculta permite recortar polígonos, ¿hasta dónde llega? En 1989, George Cybenko demostró que una red con <b>una sola capa oculta</b> y activación sigmoide puede aproximar <b>cualquier</b> función continua (sobre una región acotada) con el error tan pequeño como se quiera, siempre que tenga suficientes neuronas. Kurt Hornik y sus colegas probaron ese mismo año y en 1991 que el resultado no depende de la sigmoide: vale para casi cualquier activación no lineal. Es el <b>teorema del aproximador universal</b> (<i>universal approximation theorem</i>).</p></div><div class="analogia"><b>Imagínalo así</b><p>Con suficientes ladrillos de Lego puedes aproximar la forma de cualquier escultura. El teorema garantiza que los ladrillos alcanzan. No dice cuántos vas a necesitar, ni cómo encontrar dónde va cada uno, ni si la escultura se parecerá al modelo vista desde un ángulo que no miraste.</p></div><div class="prose"><p>El teorema es una promesa de existencia, y conviene leer la letra chica:</p><ul><li><b>No dice cuántas neuronas.</b> Para algunas funciones, una sola capa necesita una cantidad astronómica. Con varias capas, la misma función se logra a menudo con muchísimas menos: la profundidad reutiliza lo que calcularon las capas anteriores. Por eso las redes útiles son profundas y no solo anchas.</li><li><b>No dice cómo encontrar los pesos.</b> Que existan no significa que el entrenamiento los halle: puede quedarse atascado, como la red de dos neuronas ocultas que a veces no resuelve el XOR en el laboratorio.</li><li><b>No dice nada de generalizar.</b> Una red puede ajustar a la perfección los ejemplos de entrenamiento y fallar con los nuevos. Eso es el <b>sobreajuste</b> (<i>overfitting</i>) que viste en <a href="https://aaramirez.github.io/aprendizaje-estadistico/temario.html" target="_blank" rel="noopener">Aprendizaje automático</a>, y con millones de perillas el riesgo es mayor; el capítulo 5 se dedica a evitarlo.</li></ul><p>En resumen: el teorema explica por qué las redes son tan flexibles, pero el trabajo real está en entrenarlas bien y en que lo aprendido sirva para datos que no vieron.</p></div></section>
+<section><h2>Los dígitos escritos a mano: el ejemplo que crece en todo el curso</h2><div class="prose"><p>Para que cada idea tenga un caso concreto, el curso resuelve un solo problema de punta a punta: reconocer <b>dígitos escritos a mano</b>. Es el problema de Paula en la oficina de digitalización, y también uno de los más importantes en la historia de las redes.</p><p>Las personas que aparecen:</p><ul><li><b>Paula Medina</b>, científica de datos: viene del aprendizaje automático clásico y aquí aprende redes.</li><li><b>Simón Arce</b>, jefe de la oficina de digitalización: dueño del problema; mide en formularios por día y en errores que llegan a la base de datos.</li><li><b>Rosa Duarte</b>, coordinadora de los ocho transcriptores: revisa las casillas dudosas y conoce los casos difíciles, el 4 que parece 9, el 1 con base que parece 7, el 3 y el 8 apretados.</li><li><b>Bruno Salgado</b>, ingeniero de sistemas: mantiene el escáner, que ya recorta cada casilla y la normaliza, y pregunta dónde va a correr el modelo.</li></ul><p>Los formularios de la oficina tienen datos personales y todavía no hay casillas etiquetadas, así que Paula trabaja con un sustituto público: <b>MNIST</b> (<i>Modified National Institute of Standards and Technology database</i>). Lo armaron Yann LeCun, Corinna Cortes y Christopher Burges en 1998 a partir de dos bases del NIST, el instituto de normas de Estados Unidos: una con dígitos escritos por empleados de la Oficina del Censo y otra por estudiantes de secundaria. Tiene 60.000 imágenes de <b>entrenamiento</b> y 10.000 de <b>prueba</b>, escritas por personas distintas. Cada dígito se escaló para caber en una caja de 20 × 20 píxeles sin deformarse y se centró, por su centro de masa, en una imagen de 28 × 28 en tonos de gris: el mismo preprocesamiento que Bruno aplica a las casillas escaneadas. Es público y se redistribuye libremente; el catálogo de <a href="https://huggingface.co/datasets/ylecun/mnist" target="_blank" rel="noopener">Hugging Face</a> lo publica con licencia MIT.</p></div><div class="caso"><b>Un caso real</b><p>El problema no es de juguete. A fines de los años ochenta, el servicio postal de Estados Unidos necesitaba leer los códigos postales escritos a mano en millones de sobres, y los laboratorios Bell de AT&amp;T entrenaron redes para hacerlo. De ese trabajo salió LeNet, la red convolucional de Yann LeCun y su equipo, que a fines de los noventa leía una parte importante de los cheques que se procesaban en los bancos de Estados Unidos. MNIST nació en ese contexto, como una prueba común para comparar métodos, y el capítulo 6 vuelve sobre LeNet.</p></div><div class="prose"><p>Los laboratorios del curso usan una <b>muestra de 2.000 dígitos de MNIST</b>: 1.500 para entrenar y 500 para medir, 150 y 50 de cada dígito. Para que las redes entrenen en segundos dentro de la página, también en un celular, cada imagen se reduce a <b>14 × 14 píxeles</b> (cada bloque de 2 × 2 se promedia) con 16 tonos de gris. Las prácticas, en tu computadora, usan las imágenes completas de 28 × 28.</p><p>Con esos datos, el curso recorre una escalera. Estas son las cifras de referencia, medidas con la semilla 42 en los 10.000 dígitos de prueba:</p><div class="tbl"><table><thead><tr><th>Modelo</th><th>Qué decide</th><th>Parámetros</th><th>Exactitud en prueba</th></tr></thead><tbody><tr><td>Una neurona</td><td>¿4 o 9?</td><td>197</td><td>95,9 %</td></tr><tr><td>Una capa softmax (10 neuronas, sin capa oculta)</td><td>los diez dígitos</td><td>1.970</td><td>91,4 %</td></tr><tr><td>Red densa de referencia 196 → 64 → 10</td><td>los diez dígitos</td><td>13.258</td><td>97,1 %</td></tr><tr><td>Red convolucional (capítulo 6)</td><td>los diez dígitos</td><td>menos que la densa</td><td>alrededor de 99 %</td></tr></tbody></table></div><p>La <b>exactitud</b> (<i>accuracy</i>) es la proporción de aciertos. Que la capa softmax acierte menos que la neurona no es un retroceso: la neurona elige entre dos dígitos, la capa entre diez. Y entrenada solo con los 1.500 dígitos de la muestra, como en los laboratorios de los capítulos siguientes, la misma red densa llega al 89,4 %: con menos datos se aprende menos, una lección que vuelve en los capítulos 5 y 9.</p></div><figure class="fig fig-esquema" id="01-diagrama-5"><div class="lienzo"><svg viewBox="0 0 900 330" style="min-width:660px" role="img" aria-label="La ruta del curso: una neurona, una capa softmax, la red densa, la red convolucional y el modelo preentrenado, con la exactitud de cada una en los dígitos de prueba; abajo, las piezas que las sostienen y las otras arquitecturas">
+<defs><marker id="c1d5-m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="fl-muted"/></marker></defs>
+<text x="20" y="26" class="t t-xs t-b t-m">EL MISMO PROBLEMA, CON REDES CADA VEZ MEJORES (EXACTITUD EN LOS DÍGITOS DE PRUEBA DE MNIST)</text>
+<rect x="20" y="40" width="160" height="120" rx="12" class="c-red"/><text x="32" y="62" class="t t-xs t-b k-red">UNA NEURONA</text><text x="32" y="80" class="t t-s t-m">cap. 1</text><text x="32" y="106" class="t t-s">¿4 o 9?</text><text x="32" y="140" class="t t-b" style="font-size:20px">95,9 %</text><rect x="192" y="40" width="160" height="120" rx="12" class="c-apl"/><text x="204" y="62" class="t t-xs t-b k-apl">CAPA SOFTMAX</text><text x="204" y="80" class="t t-s t-m">caps. 1-2</text><text x="204" y="106" class="t t-s">diez dígitos</text><text x="204" y="140" class="t t-b" style="font-size:20px">91,4 %</text><rect x="364" y="40" width="160" height="120" rx="12" class="c-red"/><text x="376" y="62" class="t t-xs t-b k-red">RED DENSA</text><text x="376" y="80" class="t t-s t-m">caps. 1-5</text><text x="376" y="106" class="t t-s">196 → 64 → 10</text><text x="376" y="140" class="t t-b" style="font-size:20px">97,1 %</text><rect x="536" y="40" width="160" height="120" rx="12" class="c-enl"/><text x="548" y="62" class="t t-xs t-b k-enl">CONVOLUCIONAL</text><text x="548" y="80" class="t t-s t-m">cap. 6</text><text x="548" y="106" class="t t-s">filtros que recorren</text><text x="548" y="140" class="t t-b" style="font-size:20px">≈ 99 %</text><rect x="708" y="40" width="160" height="120" rx="12" class="caja"/><text x="720" y="62" class="t t-xs t-b t-m">PREENTRENADO</text><text x="720" y="80" class="t t-s t-m">caps. 9-10</text><text x="720" y="106" class="t t-s">ajustado con pocos</text><text x="720" y="140" class="t t-b" style="font-size:20px">datos propios</text><path d="M180 100H192" class="ln" marker-end="url(#c1d5-m)"/><path d="M352 100H364" class="ln" marker-end="url(#c1d5-m)"/><path d="M524 100H536" class="ln" marker-end="url(#c1d5-m)"/><path d="M696 100H708" class="ln" marker-end="url(#c1d5-m)"/>
+<text x="20" y="182" class="t t-s t-m">La neurona decide entre dos dígitos; las demás, entre diez. La cifra de la convolucional es la esperada en el capítulo 6.</text>
+<rect x="20" y="200" width="860" height="52" rx="10" class="caja" style="stroke-dasharray:5 4"/>
+<text x="34" y="222" class="t t-xs t-b t-m">LAS PIEZAS QUE SOSTIENEN TODO</text>
+<text x="34" y="242" class="t t-s"><tspan class="k-apl t-b">pérdida</tspan> (cap. 2) · <tspan class="k-fis t-b">retropropagación</tspan> (cap. 3) · optimización (cap. 4) · regularización (cap. 5)</text>
+<rect x="20" y="264" width="420" height="52" rx="10" class="c-tra"/>
+<text x="34" y="286" class="t t-xs t-b k-tra">SECUENCIAS · CAP. 7</text>
+<text x="34" y="306" class="t t-s">redes recurrentes, LSTM y GRU</text>
+<rect x="460" y="264" width="420" height="52" rx="10" class="d-inet"/>
+<text x="474" y="286" class="t t-xs t-b k-inet">REPRESENTACIONES · CAP. 8</text>
+<text x="474" y="306" class="t t-s">autoencoders, espacio latente, VAE y GAN</text>
+</svg></div><figcaption><b>La ruta del curso.</b> Arriba, el mismo problema resuelto con modelos cada vez mejores, con la exactitud de cada uno en los dígitos de prueba de MNIST: una neurona (dos dígitos), una capa softmax, la red densa de referencia, la convolucional y, al final, un modelo preentrenado ajustado con pocos datos propios. En el medio, las piezas que sostienen todo, una por capítulo: la pérdida, la retropropagación, la optimización y la regularización. Abajo, las otras dos familias de arquitecturas: las redes para secuencias y las que aprenden representaciones.</figcaption></figure><div class="lab" id="01-lab-4"><div class="lab-title"><span class="tag">Laboratorio</span><h3>Dibuja un dígito y mira qué responde la red de referencia</h3></div><p class="hint">Dibuja un número grande en el recuadro, con el ratón o con el dedo. La red densa de referencia, entrenada con los 60.000 dígitos de MNIST, lo reduce a 14 × 14 como lo ve ella y reparte la probabilidad entre los diez dígitos. Prueba un 4 abierto, un 7 con raya, un 1 con base. También puedes pedir dígitos de MNIST.</p><style>
+[id="01-lab-4"] .c1l4-rot{font:700 .7rem var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px}
+[id="01-lab-4"] .btns{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+[id="01-lab-4"] .c1l4-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:14px;align-items:start}
+[id="01-lab-4"] .c1l4-dib{width:100%;max-width:280px;aspect-ratio:1;display:block;background:var(--card);border:1.5px dashed var(--line);border-radius:10px;touch-action:none;cursor:crosshair}
+[id="01-lab-4"] .c1l4-ve{width:100%;max-width:168px;aspect-ratio:1;display:block;border:1px solid var(--line);border-radius:6px;image-rendering:pixelated}
+[id="01-lab-4"] .c1l4-barras{display:grid;gap:3px;font:500 .82rem var(--f-mono)}
+[id="01-lab-4"] .c1l4-fila{display:grid;grid-template-columns:1.2em 1fr 3.6em;gap:6px;align-items:center}
+[id="01-lab-4"] .c1l4-fila .tr{height:14px;background:var(--grid);border-radius:3px;overflow:hidden}
+[id="01-lab-4"] .c1l4-fila .tr i{display:block;height:100%;width:0;background:var(--c-apl);transition:width .15s}
+[id="01-lab-4"] .c1l4-fila.top{font-weight:700;color:var(--c-apl)}
+[id="01-lab-4"] .c1l4-fila span:last-child{text-align:right}
+[id="01-lab-4"] .c1l4-nota{font:500 .78rem var(--f-display);color:var(--muted);margin-top:6px}
+@media (prefers-reduced-motion: reduce){[id="01-lab-4"] .c1l4-fila .tr i{transition:none}}
+</style>
+<div class="c1l4-grid">
+  <div><span class="c1l4-rot">Dibuja aquí un dígito (0 a 9)</span>
+    <canvas class="c1l4-dib" id="c1l4-dib" width="280" height="280" aria-label="Lienzo para dibujar un dígito con el ratón o el dedo"></canvas>
+    <div class="btns" style="margin-top:8px">
+      <button type="button" id="c1l4-borrar">Borrar</button>
+      <button type="button" id="c1l4-ej">Un dígito de MNIST</button>
+    </div></div>
+  <div><span class="c1l4-rot">Lo que ve la red: 14 × 14 = 196 números</span>
+    <canvas class="c1l4-ve" id="c1l4-ve" width="14" height="14" aria-label="El dígito reducido a 14 por 14 píxeles, tal como entra a la red"></canvas>
+    <p class="c1l4-nota">Recortado, escalado a 20 px, centrado como en MNIST y reducido a 14 × 14 con 16 tonos de gris.</p></div>
+  <div><span class="c1l4-rot">Salida de la red: probabilidad de cada dígito</span>
+    <div class="c1l4-barras" id="c1l4-barras" aria-hidden="true"></div></div>
+</div>
+<div class="readout texto" id="c1l4-out" aria-live="polite"></div></div><div class="prose"><p>Los dos laboratorios con dígitos muestran el resultado final. Las prácticas te llevan al principio: bajar los datos y abrir una imagen.</p></div><div class="practica"><div class="practica-title"><span class="tag">En la terminal</span><h3>Crea la carpeta del curso y descarga MNIST</h3></div><p>Vas a crear la carpeta <code>digitos</code>, un entorno virtual con numpy y los datos de MNIST en un solo archivo. Necesitas Python 3.10 o más reciente y unos 60 MB de espacio.</p><div class="cmds"><div class="cmd-tabs" role="tablist" aria-label="Sistema operativo"><button type="button" role="tab" data-so="win">Windows</button><button type="button" role="tab" data-so="mac linux">macOS y Linux</button></div><div class="cmd-panel" role="tabpanel" data-so="win"><div class="cmd-l"><code>mkdir $HOME\digitos</code><button type="button" class="copiar">Copiar</button></div><div class="cmd-l"><code>cd $HOME\digitos</code><button type="button" class="copiar">Copiar</button></div><div class="cmd-l"><code>python -m venv .venv</code><button type="button" class="copiar">Copiar</button></div><div class="cmd-l"><code>.venv\Scripts\activate</code><button type="button" class="copiar">Copiar</button></div><div class="cmd-l"><code>pip install numpy</code><button type="button" class="copiar">Copiar</button></div></div><div class="cmd-panel" role="tabpanel" data-so="mac linux"><div class="cmd-l"><code>mkdir -p ~/digitos</code><button type="button" class="copiar">Copiar</button></div><div class="cmd-l"><code>cd ~/digitos</code><button type="button" class="copiar">Copiar</button></div><div class="cmd-l"><code>python3 -m venv .venv</code><button type="button" class="copiar">Copiar</button></div><div class="cmd-l"><code>source .venv/bin/activate</code><button type="button" class="copiar">Copiar</button></div><div class="cmd-l"><code>pip install numpy</code><button type="button" class="copiar">Copiar</button></div></div></div><ol class="steps"><li><span>Guarda este programa como <code>descargar_mnist.py</code> dentro de <code>digitos</code>:</span></li></ol><div class="code-copia code-lineas"><pre tabindex="0"><code><span class="ln">"""Descarga MNIST y lo guarda como un solo archivo de numpy: datos/mnist.npz.</span>
+<span class="ln"></span>
+<span class="ln">MNIST: 70.000 dígitos escritos a mano, de 28 x 28 píxeles en gris (0 = fondo, 255 = tinta).</span>
+<span class="ln">Los archivos originales usan el formato IDX: una cabecera con el número de imágenes y su</span>
+<span class="ln">tamaño, y después los píxeles uno tras otro, un byte cada uno.</span>
+<span class="ln"></span>
+<span class="ln">Uso: python descargar_mnist.py</span>
+<span class="ln">"""</span>
+<span class="ln">import gzip</span>
+<span class="ln">import urllib.request</span>
+<span class="ln">from pathlib import Path</span>
+<span class="ln"></span>
+<span class="ln">import numpy as np</span>
+<span class="ln"></span>
+<span class="ln">ESPEJO = "https://ossci-datasets.s3.amazonaws.com/mnist/"   # el espejo que usa torchvision</span>
+<span class="ln">ARCHIVOS = {</span>
+<span class="ln">    "x_train": "train-images-idx3-ubyte.gz",</span>
+<span class="ln">    "y_train": "train-labels-idx1-ubyte.gz",</span>
+<span class="ln">    "x_test": "t10k-images-idx3-ubyte.gz",</span>
+<span class="ln">    "y_test": "t10k-labels-idx1-ubyte.gz",</span>
+<span class="ln">}</span>
+<span class="ln">CARPETA = Path("datos")</span>
+<span class="ln"></span>
+<span class="ln"></span>
+<span class="ln">def leer_idx(datos):</span>
+<span class="ln">    """Lee un archivo IDX: 2 bytes en cero, el tipo, cuántas dimensiones y su tamaño."""</span>
+<span class="ln">    dims = datos[3]</span>
+<span class="ln">    forma = [int.from_bytes(datos[4 + 4 * i: 8 + 4 * i], "big") for i in range(dims)]</span>
+<span class="ln">    return np.frombuffer(datos, dtype=np.uint8, offset=4 + 4 * dims).reshape(forma)</span>
+<span class="ln"></span>
+<span class="ln"></span>
+<span class="ln">CARPETA.mkdir(exist_ok=True)</span>
+<span class="ln">arreglos = {}</span>
+<span class="ln">for clave, nombre in ARCHIVOS.items():</span>
+<span class="ln">    destino = CARPETA / nombre</span>
+<span class="ln">    if not destino.exists():</span>
+<span class="ln">        print("Descargando", nombre)</span>
+<span class="ln">        urllib.request.urlretrieve(ESPEJO + nombre, destino)</span>
+<span class="ln">    arreglos[clave] = leer_idx(gzip.decompress(destino.read_bytes()))</span>
+<span class="ln"></span>
+<span class="ln">np.savez_compressed(CARPETA / "mnist.npz", **arreglos)</span>
+<span class="ln">for clave, a in arreglos.items():</span>
+<span class="ln">    print(f"{clave:8} forma {a.shape}  tipo {a.dtype}")</span>
+<span class="ln">print("Primeras 10 etiquetas de entrenamiento:", arreglos["y_train"][:10])</span>
+<span class="ln">print("Guardado en", CARPETA / "mnist.npz")</span></code></pre><button type="button" class="ver-todo" aria-expanded="false">Ver las 45 líneas</button><button type="button" class="copiar copiar-todo">Copiar</button></div><ol class="steps" start="2" style="counter-reset:st 1"><li><span>Córrelo:</span></li></ol><div class="cmds"><div class="cmd-tabs" role="tablist" aria-label="Sistema operativo"><button type="button" role="tab" data-so="win">Windows</button><button type="button" role="tab" data-so="mac linux">macOS y Linux</button></div><div class="cmd-panel" role="tabpanel" data-so="win"><div class="cmd-l"><code>python descargar_mnist.py</code><button type="button" class="copiar">Copiar</button></div></div><div class="cmd-panel" role="tabpanel" data-so="mac linux"><div class="cmd-l"><code>python3 descargar_mnist.py</code><button type="button" class="copiar">Copiar</button></div></div></div><ol class="steps" start="3" style="counter-reset:st 2"><li><span>Mira la carpeta <code>datos</code>: deberías ver los cuatro archivos <code>.gz</code> y <code>mnist.npz</code>.</span></li></ol><p><b>Qué observar:</b> el programa baja unos 11 MB en pocos segundos y muestra la <b>forma</b> (<i>shape</i>) de cada arreglo: <code>(60000, 28, 28)</code> para las imágenes de entrenamiento y <code>(10000, 28, 28)</code> para las de prueba, de tipo <code>uint8</code> (enteros de 0 a 255, un byte por píxel). Las etiquetas son un número por imagen; las diez primeras son <code>5 0 4 1 9 2 1 3 1 4</code>. Si lo corres otra vez, no descarga nada: usa los <code>.gz</code> que ya tiene. Toda la base cabe en 11 MB comprimida: es pequeña para los estándares de hoy, y por eso se entrena en minutos en un portátil.</p></div><div class="practica"><div class="practica-title"><span class="tag">En la terminal</span><h3>Un dígito por dentro y una red que todavía no aprendió nada</h3></div><p>Vas a ver una imagen como la ve la computadora, una tabla de números, y a pasar los 10.000 dígitos de prueba por una red 784 → 64 → 10 con pesos al azar. Con el entorno activado y dentro de <code>digitos</code>:</p><ol class="steps"><li><span>Guarda este programa como <code>ver_digito.py</code>:</span></li></ol><div class="code-copia code-lineas"><pre tabindex="0"><code><span class="ln">"""Un dígito de MNIST por dentro, y lo que responde una red que todavía no aprendió nada."""</span>
+<span class="ln">import numpy as np</span>
+<span class="ln"></span>
+<span class="ln">d = np.load("datos/mnist.npz")</span>
+<span class="ln">x, y = d["x_train"], d["y_train"]</span>
+<span class="ln">print("Imágenes de entrenamiento:", len(x), "· de prueba:", len(d["x_test"]))</span>
+<span class="ln">print("Cuántas hay de cada dígito (del 0 al 9):", np.bincount(y))</span>
+<span class="ln"></span>
+<span class="ln">i = 0</span>
+<span class="ln">print(f"\nLa imagen {i} es un {y[i]}. Sus 28 x 28 píxeles, de 0 (fondo) a 255 (tinta):")</span>
+<span class="ln">tonos = " .:-=+*#%@"</span>
+<span class="ln">for fila in x[i]:</span>
+<span class="ln">    print("".join(tonos[int(v) * len(tonos) // 256] * 2 for v in fila))</span>
+<span class="ln">print("Fila 7, columnas 6 a 13:", x[i][7, 6:14])</span>
+<span class="ln"></span>
+<span class="ln"># Una red 784-64-10 con pesos al azar: todavía no aprendió nada</span>
+<span class="ln">rng = np.random.default_rng(42)</span>
+<span class="ln">W1 = rng.normal(0, np.sqrt(2 / 784), (784, 64)); b1 = np.zeros(64)</span>
+<span class="ln">W2 = rng.normal(0, np.sqrt(2 / 64), (64, 10));   b2 = np.zeros(10)</span>
+<span class="ln">X = d["x_test"].reshape(-1, 784) / 255           # 10.000 imágenes, cada una como 784 números de 0 a 1</span>
+<span class="ln">h = np.maximum(X @ W1 + b1, 0)                   # capa oculta: suma ponderada y ReLU</span>
+<span class="ln">z = h @ W2 + b2                                  # 10 puntajes por imagen</span>
+<span class="ln">pred = z.argmax(axis=1)                          # el dígito con el puntaje más alto</span>
+<span class="ln">print("\nPesos y sesgos de la red:", W1.size + b1.size + W2.size + b2.size)</span>
+<span class="ln">print("Puntajes de la primera imagen de prueba (un", d["y_test"][0], "):", np.round(z[0], 2))</span>
+<span class="ln">print(f"Aciertos sin entrenar: {(pred == d['y_test']).mean():.1%}")</span>
+<span class="ln">print("Cuántas veces elige cada dígito:", np.bincount(pred, minlength=10))</span></code></pre><button type="button" class="ver-todo" aria-expanded="false">Ver las 27 líneas</button><button type="button" class="copiar copiar-todo">Copiar</button></div><ol class="steps" start="2" style="counter-reset:st 1"><li><span>Córrelo:</span></li></ol><div class="cmds"><div class="cmd-tabs" role="tablist" aria-label="Sistema operativo"><button type="button" role="tab" data-so="win">Windows</button><button type="button" role="tab" data-so="mac linux">macOS y Linux</button></div><div class="cmd-panel" role="tabpanel" data-so="win"><div class="cmd-l"><code>python ver_digito.py</code><button type="button" class="copiar">Copiar</button></div></div><div class="cmd-panel" role="tabpanel" data-so="mac linux"><div class="cmd-l"><code>python3 ver_digito.py</code><button type="button" class="copiar">Copiar</button></div></div></div><ol class="steps" start="3" style="counter-reset:st 2"><li><span>Busca el dígito dibujado con caracteres y compara la fila de números con el dibujo.</span></li></ol><p><b>Qué observar:</b> la primera imagen es un 5, y en la terminal aparece dibujado con caracteres más oscuros donde hay más tinta. La fila 7 muestra el borde del trazo: <code>0 49 238 253 253…</code>, de fondo a tinta plena en dos píxeles. Las clases están casi balanceadas (de 5.421 cincos a 6.742 unos). La red tiene 50.890 parámetros (784 × 64 + 64 + 64 × 10 + 10) y el pase hacia adelante son dos multiplicaciones de matrices, <code>X @ W1</code> y <code>h @ W2</code>, para las 10.000 imágenes a la vez. Sin entrenar, acierta el 8,8 %, menos que el 10 % de adivinar al azar, y elige casi siempre el 2, el 5 o el 9: sus pesos al azar favorecen unas salidas sobre otras. Todo lo que sigue en el curso es cómo pasar de ese 8,8 % a más del 96 %. Con otra versión de numpy, las cifras de la red pueden cambiar un poco.</p></div><div class="ml"><b>En la práctica</b><p><b>La primera reunión.</b> Paula le mostró a Simón la red de referencia clasificando dígitos dibujados en su pantalla. Simón preguntó lo que pregunta siempre: «¿cuántos errores llegan a la base?». Paula le explicó que la red no responde solo un dígito, sino una probabilidad para cada uno, y que esa confianza permite mandar a Rosa solo las casillas dudosas. Bruno pidió que el modelo fuera chico, para correr en el servidor del escáner sin comprar equipos: los 13.258 parámetros de la red densa ocupan menos que una foto. Acordaron tres cosas: medir siempre con dígitos que la red no vio, empezar con MNIST mientras el equipo de Rosa etiqueta casillas propias, y decidir el umbral de confianza con números. Ese umbral necesita entender qué devuelve exactamente la red y cómo se mide su error: es el tema del capítulo 2.</p></div></section>
+<section><h2>La idea clave</h2><div class="prose"><p>Una neurona artificial calcula una suma ponderada de sus entradas, le agrega un sesgo y aplica una función de activación. Sola, solo traza una frontera recta: por eso no puede con el XOR. Al apilar neuronas en capas, cada capa oculta recorta y dobla lo que recibe de la anterior, y la red puede dibujar fronteras tan complicadas como haga falta. Lo que lo permite es la no linealidad entre capas: sin activaciones, cualquier pila de capas equivale a una sola. Una red neuronal es una composición de funciones simples, con miles de parámetros que el entrenamiento ajusta.</p></div></section>
+<section><h2>Pruébate</h2><div class="quiz"><h3>Pruébate</h3><details><summary>¿Qué papel cumple el sesgo en una neurona?</summary><p>Corre el punto de decisión: suma un valor fijo a la suma ponderada, de modo que la neurona puede activarse aunque las entradas sean pequeñas, o exigir más antes de hacerlo. Geométricamente, desplaza la recta frontera sin girarla.</p></details><details><summary>¿Por qué una sola neurona no puede calcular el XOR?</summary><p>Porque su frontera es una recta, y los casos del XOR están cruzados: (0,1) y (1,0) dan 1, y (0,0) y (1,1) dan 0. Ninguna recta deja a los primeros de un lado y a los segundos del otro.</p></details><details><summary>Si quitas todas las funciones de activación de una red de diez capas, ¿qué obtienes?</summary><p>Una función lineal de las entradas, equivalente a una sola capa: la composición de funciones lineales es lineal. La frontera vuelve a ser una recta.</p></details><details><summary>¿Cuántos parámetros tiene una red 196 → 64 → 10?</summary><p>196 × 64 + 64 = 12.608 en la capa oculta y 64 × 10 + 10 = 650 en la salida: 13.258 en total.</p></details><details><summary>¿Qué garantiza el teorema del aproximador universal y qué no?</summary><p>Garantiza que una red con una capa oculta y suficientes neuronas puede aproximar cualquier función continua. No dice cuántas neuronas hacen falta, ni cómo encontrar los pesos, ni que la red vaya a generalizar a datos nuevos.</p></details><details><summary>¿Por qué se abandonó el escalón como activación?</summary><p>Porque su pendiente es cero en casi todas partes: el entrenamiento por gradiente no recibe ninguna señal de hacia dónde corregir las capas ocultas.</p></details></div></section>
+<section><h2>Para investigar</h2><div class="investiga"><h3>Para investigar</h3><p class="hint">Estas preguntas no se responden en el capítulo: búscalas por tu cuenta.</p><ol><li>¿Cómo guardaba sus pesos el Mark I Perceptron, si en 1958 no había memoria barata?<small>Pista: busca «Mark I Perceptron potentiometers».</small></li><li>¿Qué es la función <i>softplus</i> y qué relación tiene con ReLU?<small>Pista: busca «softplus activation function».</small></li><li>¿Qué dice el teorema de Kolmogorov-Arnold y por qué a veces se cita junto al aproximador universal?<small>Pista: busca «Kolmogorov–Arnold representation theorem».</small></li><li>¿Qué son Fashion-MNIST y EMNIST, y por qué se crearon si ya existía MNIST?<small>Pista: busca «Fashion-MNIST Zalando why».</small></li><li>¿Cuántas neuronas y sinapsis tiene un cerebro humano, y cuántos parámetros tienen los modelos de lenguaje más grandes publicados?<small>Pista: busca «número de neuronas del cerebro humano» y compara con fuentes fechadas.</small></li></ol></div></section>
+<section><h2>Para saber más</h2><div class="vids"><span>Para saber más</span><a class="vid" href="https://www.deeplearningbook.org/" target="_blank" rel="noopener">Deep Learning <small>el libro de Goodfellow, Bengio y Courville, gratuito en línea; el capítulo 6 trata las redes prealimentadas, en inglés</small></a><a class="vid" href="https://www.3blue1brown.com/topics/neural-networks" target="_blank" rel="noopener">Neural networks <small>la serie visual de 3Blue1Brown, que también usa dígitos escritos a mano, en inglés</small></a><a class="vid" href="https://playground.tensorflow.org/" target="_blank" rel="noopener">TensorFlow Playground <small>una red que se entrena en el navegador con datos de juguete como los del laboratorio, en inglés</small></a><a class="vid" href="http://neuralnetworksanddeeplearning.com/chap4.html" target="_blank" rel="noopener">A visual proof that neural nets can compute any function <small>el aproximador universal explicado con dibujos, del libro de Michael Nielsen, en inglés</small></a></div></section>
+<label class="got"><input type="checkbox" id="got"> Lo tengo claro</label>
+<nav class="pager" id="pager" aria-label="Capítulo anterior y siguiente"></nav>
+</main>
+</div>
+<footer><span>Curso abierto de aaramirez.github.io.</span><span>Sitio publicado: <a href="https://github.com/aaramirez/aprendizaje-profundo" target="_blank" rel="noopener">github.com/aaramirez/aprendizaje-profundo</a></span></footer>
+</div>
+<script src="assets/lab.js"></script>
+<script>
+(function(){
+  const raiz=document.querySelector('[id="01-lab-2"]');
+  /* RedMini: red neuronal densa mínima del curso «Aprendizaje profundo» (Float32Array, sin dependencias).
+   Plantilla: copia este bloque DENTRO de la IIFE de tu lab (el motor solo admite <script> en línea).
+   Pesos: W[l] es una matriz de tam[l+1] filas por tam[l] columnas guardada por filas: W[l][j*n+i] es el
+   peso de la entrada i hacia la neurona j. b[l][j] es el sesgo de la neurona j.
+   Uso típico:
+     const R=RedMini, red=R.crear([196,64,10],{oculta:'relu',salida:'softmax',semilla:42});
+     const opt=R.optimizador(red,{tipo:'adam',lr:0.001});
+     const X=R.digitos(DIG_X), Y=R.etiquetas(DIG_Y);      // muestra del curso
+     const azar=R.rnd(42);
+     for(let e=0;e<15;e++) R.epoca(red,opt,X,Y,{n:DIG_NENT,lote:32,rnd:azar});
+     R.evaluar(red,X,Y,DIG_NENT,DIG_NENT+DIG_NPRU)  // {perdida, exactitud} en las 500 de prueba
+*/
+const RedMini=(function(){
+  /* Azar con semilla (mulberry32) y normal estándar (Box-Muller). */
+  function rnd(s){return function(){s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  function gauss(r){let u=0;while(!u)u=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*r());}
+  /* Activaciones ocultas: f(z) y su derivada d(z). */
+  const sg=z=>1/(1+Math.exp(-z));
+  const ACT={
+    relu:{f:z=>z>0?z:0,d:z=>z>0?1:0},
+    fuga:{f:z=>z>0?z:0.01*z,d:z=>z>0?1:0.01},              // ReLU con fuga (leaky ReLU)
+    sigmoide:{f:sg,d:z=>{const s=sg(z);return s*(1-s);}},
+    tanh:{f:z=>Math.tanh(z),d:z=>{const t=Math.tanh(z);return 1-t*t;}},
+    lineal:{f:z=>z,d:()=>1}
+  };
+  /* tam: neuronas por capa, de la entrada a la salida. oculta: activación de las capas ocultas.
+     salida: 'softmax' (clases, entropía cruzada), 'sigmoide' (sí/no, entropía cruzada binaria) o 'lineal' (números, ECM).
+     Inicialización: He (√(2/n)) para ReLU, Xavier (√(1/n)) para las demás, o la escala que se pase. */
+  function crear(tam,o={}){
+    const r=rnd(o.semilla??42),oc=o.oculta||'relu',sal=o.salida||'softmax',W=[],b=[];
+    for(let l=0;l<tam.length-1;l++){
+      const n=tam[l],m=tam[l+1],esc=o.escala??((oc==='relu'||oc==='fuga')?Math.sqrt(2/n):Math.sqrt(1/n));
+      const w=new Float32Array(n*m);for(let i=0;i<w.length;i++)w[i]=gauss(r)*esc;
+      W.push(w);b.push(new Float32Array(m));
+    }
+    return {tam:tam.slice(),oculta:oc,salida:sal,W,b};
+  }
+  function ceros(red){return {W:red.W.map(w=>new Float32Array(w.length)),b:red.b.map(v=>new Float32Array(v.length))};}
+  function aplicarSalida(tipo,z){
+    const m=z.length,y=new Float32Array(m);
+    if(tipo==='softmax'){let mx=-Infinity;for(let j=0;j<m;j++)if(z[j]>mx)mx=z[j];let s=0;
+      for(let j=0;j<m;j++){y[j]=Math.exp(z[j]-mx);s+=y[j];}for(let j=0;j<m;j++)y[j]/=s;}
+    else if(tipo==='sigmoide'){for(let j=0;j<m;j++)y[j]=sg(z[j]);}
+    else y.set(z);
+    return y;
+  }
+  /* Pase hacia adelante de UN ejemplo. Devuelve {A,Z,M}: A[l] activaciones (A[0]=x), Z[l] sumas ponderadas,
+     M[l] máscara de dropout (si o.dropout>0 y o.rnd). La salida es A[A.length-1]. */
+  function adelante(red,x,o){
+    const L=red.W.length,A=[x],Z=[null],M=[null],p=o&&o.dropout||0;let a=x;
+    for(let l=0;l<L;l++){
+      const n=red.tam[l],m=red.tam[l+1],w=red.W[l],bb=red.b[l],z=new Float32Array(m);
+      for(let j=0;j<m;j++){let s=bb[j];const k=j*n;for(let i=0;i<n;i++)s+=w[k+i]*a[i];z[j]=s;}
+      let y;
+      if(l<L-1){const f=ACT[red.oculta].f;y=new Float32Array(m);for(let j=0;j<m;j++)y[j]=f(z[j]);
+        if(p>0){const mk=new Float32Array(m),r=o.rnd;for(let j=0;j<m;j++){mk[j]=r()<p?0:1/(1-p);y[j]*=mk[j];}M.push(mk);} else M.push(null);}
+      else {y=aplicarSalida(red.salida,z);M.push(null);}
+      Z.push(z);A.push(y);a=y;
+    }
+    return {A,Z,M};
+  }
+  /* El objetivo puede ser un número (la clase para softmax, el valor para una sola salida) o un vector. */
+  function objetivo(red,t){
+    if(typeof t!=='number')return t;
+    const v=new Float32Array(red.tam[red.tam.length-1]);
+    if(red.salida==='softmax')v[t]=1;else v[0]=t;
+    return v;
+  }
+  function perdida(red,y,t){
+    t=objetivo(red,t);const m=y.length;let s=0;
+    if(red.salida==='softmax'){for(let j=0;j<m;j++)if(t[j]>0)s-=t[j]*Math.log(Math.max(y[j],1e-12));return s;}
+    if(red.salida==='sigmoide'){for(let j=0;j<m;j++){const q=Math.min(Math.max(y[j],1e-7),1-1e-7);s-=t[j]*Math.log(q)+(1-t[j])*Math.log(1-q);}return s;}
+    for(let j=0;j<m;j++)s+=(y[j]-t[j])**2;return s/m;            // error cuadrático medio
+  }
+  /* Pase hacia atrás de UN ejemplo: suma sus gradientes en G (de ceros(red)) y devuelve los deltas
+     ∂pérdida/∂z de cada capa (D[l], l=1..L), útiles para dibujar el gradiente que fluye hacia atrás. */
+  function atras(red,c,t,G){
+    t=objetivo(red,t);const L=red.W.length,yL=c.A[L],D=new Array(L+1);
+    let d=new Float32Array(yL.length);
+    for(let j=0;j<d.length;j++)d[j]=red.salida==='lineal'?2*(yL[j]-t[j])/d.length:yL[j]-t[j];
+    D[L]=d;
+    for(let l=L-1;l>=0;l--){
+      const n=red.tam[l],m=red.tam[l+1],w=red.W[l],a=c.A[l];
+      if(G){const gw=G.W[l],gb=G.b[l];
+        for(let j=0;j<m;j++){const dj=d[j];if(dj===0)continue;gb[j]+=dj;const k=j*n;for(let i=0;i<n;i++)gw[k+i]+=dj*a[i];}}
+      if(l>0){
+        const dp=new Float32Array(n),fd=ACT[red.oculta].d,z=c.Z[l],mk=c.M[l];
+        for(let j=0;j<m;j++){const dj=d[j];if(dj===0)continue;const k=j*n;for(let i=0;i<n;i++)dp[i]+=w[k+i]*dj;}
+        for(let i=0;i<n;i++)dp[i]*=fd(z[i])*(mk?mk[i]:1);
+        d=dp;D[l]=d;
+      }
+    }
+    return D;
+  }
+  /* Optimizadores: 'sgd', 'momento', 'rmsprop', 'adam'. paso(G,n) usa el promedio G/n y deja G en cero.
+     o.decaimiento: decaimiento de pesos L2 (no se aplica a los sesgos). */
+  function optimizador(red,o={}){
+    const tipo=o.tipo||'sgd',b1=o.beta1??0.9,b2=o.beta2??0.999,mu=o.momento??0.9,rho=o.rho??0.9,eps=1e-8,dec=o.decaimiento||0;
+    const Mo=ceros(red),Ve=ceros(red);let t=0;
+    return {tipo,lr:o.lr??(tipo==='adam'||tipo==='rmsprop'?0.001:0.05),
+      paso(G,n){
+        t++;const k=1/(n||1),lr=this.lr,c1=1-Math.pow(b1,t),c2=1-Math.pow(b2,t);
+        for(let l=0;l<red.W.length;l++){
+          [[red.W[l],G.W[l],Mo.W[l],Ve.W[l],dec],[red.b[l],G.b[l],Mo.b[l],Ve.b[l],0]].forEach(([P,g,m,v,dd])=>{
+            for(let i=0;i<P.length;i++){
+              const gi=g[i]*k+dd*P[i];g[i]=0;
+              if(tipo==='sgd')P[i]-=lr*gi;
+              else if(tipo==='momento'){m[i]=mu*m[i]+gi;P[i]-=lr*m[i];}
+              else if(tipo==='rmsprop'){v[i]=rho*v[i]+(1-rho)*gi*gi;P[i]-=lr*gi/(Math.sqrt(v[i])+eps);}
+              else {m[i]=b1*m[i]+(1-b1)*gi;v[i]=b2*v[i]+(1-b2)*gi*gi;P[i]-=lr*(m[i]/c1)/(Math.sqrt(v[i]/c2)+eps);}
+            }
+          });
+        }
+      }};
+  }
+  function argmax(v){let k=0;for(let j=1;j<v.length;j++)if(v[j]>v[k])k=j;return k;}
+  function acierta(red,y,t){
+    if(red.salida==='softmax')return argmax(y)===(typeof t==='number'?t:argmax(t));
+    if(red.salida==='sigmoide')return (y[0]>=0.5)===((typeof t==='number'?t:t[0])>=0.5);
+    return false;
+  }
+  function barajar(n,r){const a=new Int32Array(n);for(let i=0;i<n;i++)a[i]=i;for(let i=n-1;i>0;i--){const j=Math.floor(r()*(i+1));const x=a[i];a[i]=a[j];a[j]=x;}return a;}
+  /* Una época de minilotes sobre los ejemplos [desde, desde+n) de X (Float32Array plano, d valores por ejemplo)
+     y Y (etiquetas o vectores). Devuelve la pérdida y la exactitud promedio de la época (medidas durante el
+     entrenamiento). o: {n, desde, lote, rnd, dropout}. */
+  function epoca(red,opt,X,Y,o={}){
+    const d=red.tam[0],desde=o.desde||0,n=o.n??(Y.length-desde),lote=o.lote||32,r=o.rnd||Math.random;
+    const idx=barajar(n,r),G=ceros(red),fw={dropout:o.dropout||0,rnd:r};let suma=0,ac=0;
+    for(let s=0;s<n;s+=lote){
+      const e=Math.min(n,s+lote);
+      for(let q=s;q<e;q++){
+        const i=desde+idx[q],x=X.subarray(i*d,i*d+d),c=adelante(red,x,fw),y=c.A[c.A.length-1];
+        suma+=perdida(red,y,Y[i]);if(acierta(red,y,Y[i]))ac++;atras(red,c,Y[i],G);
+      }
+      opt.paso(G,e-s);
+    }
+    return {perdida:suma/n,exactitud:ac/n};
+  }
+  function predecir(red,x){const c=adelante(red,x);return c.A[c.A.length-1];}
+  /* Pérdida y exactitud promedio en los ejemplos [desde, hasta). */
+  function evaluar(red,X,Y,desde,hasta){
+    const d=red.tam[0];let s=0,ac=0;
+    for(let i=desde;i<hasta;i++){const y=predecir(red,X.subarray(i*d,i*d+d));s+=perdida(red,y,Y[i]);if(acierta(red,y,Y[i]))ac++;}
+    return {perdida:s/(hasta-desde),exactitud:ac/(hasta-desde)};
+  }
+  /* La muestra del curso: 98 bytes por imagen de 14x14 (4 bits por píxel). Devuelve valores de 0 a 1. */
+  function digitos(b64){const s=atob(b64),X=new Float32Array(s.length*2);
+    for(let i=0;i<s.length;i++){const v=s.charCodeAt(i);X[2*i]=(v>>4)/15;X[2*i+1]=(v&15)/15;}return X;}
+  function etiquetas(txt){const Y=new Uint8Array(txt.length);for(let i=0;i<txt.length;i++)Y[i]=txt.charCodeAt(i)-48;return Y;}
+  /* Pesos guardados en el lab: {tam, oculta, salida, esc:[eW0,eb0,eW1,eb1,…], datos: base64 de int8 (W0,b0,W1,b1,…)}.
+     Cada valor es int8 × su escala. */
+  function cargar(p){
+    const red={tam:p.tam.slice(),oculta:p.oculta,salida:p.salida,W:[],b:[]},s=atob(p.datos);let k=0,e=0;
+    const toma=n=>{const v=new Float32Array(n),esc=p.esc[e++];for(let i=0;i<n;i++){let c=s.charCodeAt(k++);if(c>127)c-=256;v[i]=c*esc;}return v;};
+    for(let l=0;l<p.tam.length-1;l++){red.W.push(toma(p.tam[l]*p.tam[l+1]));red.b.push(toma(p.tam[l+1]));}
+    return red;
+  }
+  function contarPesos(red){return red.W.reduce((s,w)=>s+w.length,0)+red.b.reduce((s,v)=>s+v.length,0);}
+  return {rnd,gauss,ACT,crear,ceros,adelante,atras,perdida,optimizador,epoca,evaluar,predecir,argmax,barajar,digitos,etiquetas,cargar,contarPesos};
+})();
+
+  const nf=(n,d=0)=>{const s=Math.abs(n).toFixed(d).split('.');s[0]=s[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.');return (n<0?'−':'')+s.join(',');};
+  const css=n=>getComputedStyle(raiz).getPropertyValue(n).trim();
+  const quieto=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const P=[[0,0],[0,1],[1,0],[1,1]],T=[0,1,1,0];
+  const X=new Float32Array([0,0,0,1,1,0,1,1]),Y=new Float32Array(T);
+  const st={modo:'mano',w1:1,w2:1,b:-0.5,ep:0,errores:[],corre:false,semilla:1};
+  let red,opt,raf=0;
+  function lienzo(cv){const w=Math.min(cv.clientWidth||300,340),d=window.devicePixelRatio||1;cv.width=Math.round(w*d);cv.height=Math.round(w*d);cv.style.height=w+'px';const c=cv.getContext('2d');c.setTransform(d,0,0,d,0,0);return {c,w};}
+  const esc=s=>s>0?1:0;
+  function salidaNeurona(x){return esc(st.w1*x[0]+st.w2*x[1]+st.b);}
+  function plano(f,lineas){
+    const {c,w}=lienzo(raiz.querySelector('#c1l2-plano')),lo=-0.5,hi=1.5,S=v=>(v-lo)/(hi-lo)*w,Sy=v=>w-(v-lo)/(hi-lo)*w;
+    const N=60,cw=w/N;
+    for(let j=0;j<N;j++)for(let i=0;i<N;i++){const x=[lo+(i+.5)*(hi-lo)/N,hi-(j+.5)*(hi-lo)/N],p=f(x);c.fillStyle=css(p>=.5?'--warm-soft':'--accent-soft');c.fillRect(i*cw,j*cw,cw+.6,cw+.6);}
+    c.strokeStyle=css('--grid');c.lineWidth=1;[0,1].forEach(v=>{c.beginPath();c.moveTo(S(v),0);c.lineTo(S(v),w);c.moveTo(0,Sy(v));c.lineTo(w,Sy(v));c.stroke();});
+    (lineas||[]).forEach(([a,b,cc,col,dash])=>{c.strokeStyle=col;c.lineWidth=2;c.setLineDash(dash||[]);c.beginPath();
+      if(Math.abs(b)>1e-6){c.moveTo(0,Sy(-(a*lo+cc)/b));c.lineTo(w,Sy(-(a*hi+cc)/b));}else if(Math.abs(a)>1e-6){c.moveTo(S(-cc/a),0);c.lineTo(S(-cc/a),w);}c.stroke();c.setLineDash([]);});
+    c.font='bold 12px '+css('--f-mono');
+    P.forEach((p,k)=>{const x=S(p[0]),y=Sy(p[1]),ok=(f(p)>=.5?1:0)===T[k];
+      if(T[k]){c.fillStyle=css('--warm');c.beginPath();c.moveTo(x,y-10);c.lineTo(x+9,y+7);c.lineTo(x-9,y+7);c.closePath();c.fill();}
+      else{c.fillStyle=css('--accent');c.beginPath();c.arc(x,y,8,0,7);c.fill();}
+      c.strokeStyle=css(ok?'--good':'--warm');c.lineWidth=2.5;c.beginPath();c.arc(x,y,14,0,7);c.stroke();
+      c.fillStyle=css('--ink');c.textAlign='left';c.fillText('('+p[0]+','+p[1]+')',x+16,y-8);});
+    c.strokeStyle=css('--line');c.strokeRect(.5,.5,w-1,w-1);
+    return P.map(p=>f(p)>=.5?1:0);
+  }
+  function oculto(){
+    const {c,w}=lienzo(raiz.querySelector('#c1l2-oculto')),S=v=>(v+1.2)/2.4*w,Sy=v=>w-(v+1.2)/2.4*w;
+    c.fillStyle=css('--card');c.fillRect(0,0,w,w);
+    const N=48,cw=w/N,W2=red.W[1],b2=red.b[1][0];
+    for(let j=0;j<N;j++)for(let i=0;i<N;i++){const h1=-1.2+(i+.5)*2.4/N,h2=1.2-(j+.5)*2.4/N,z=W2[0]*h1+W2[1]*h2+b2;c.fillStyle=css(z>=0?'--warm-soft':'--accent-soft');c.fillRect(i*cw,j*cw,cw+.6,cw+.6);}
+    c.strokeStyle=css('--grid');c.beginPath();c.moveTo(S(0),0);c.lineTo(S(0),w);c.moveTo(0,Sy(0));c.lineTo(w,Sy(0));c.stroke();
+    c.fillStyle=css('--muted');c.font='11px '+css('--f-display');c.fillText('h₁ →',w-34,Sy(0)-5);c.fillText('h₂ ↑',S(0)+5,12);
+    c.font='bold 12px '+css('--f-mono');
+    const pos=P.map(p=>{const a=RedMini.adelante(red,new Float32Array(p)).A[1];return [S(a[0]),Sy(a[1])];}),hecho=new Set();
+    P.forEach((p,k)=>{const x=pos[k][0],y=pos[k][1];
+      if(T[k]){c.fillStyle=css('--warm');c.beginPath();c.moveTo(x,y-10);c.lineTo(x+9,y+7);c.lineTo(x-9,y+7);c.closePath();c.fill();}
+      else{c.fillStyle=css('--accent');c.beginPath();c.arc(x,y,8,0,7);c.fill();}
+      if(hecho.has(k))return;const jun=P.map((q,j)=>j).filter(j=>Math.hypot(pos[j][0]-x,pos[j][1]-y)<14);jun.forEach(j=>hecho.add(j));
+      const et=jun.map(j=>'('+P[j][0]+','+P[j][1]+')').join(' y ');c.fillStyle=css('--ink');c.textAlign=x>w/2?'right':'left';
+      c.fillText(et,x>w/2?x-12:x+12,y+(y<24?16:-10));c.textAlign='left';});
+    c.strokeStyle=css('--line');c.strokeRect(.5,.5,w-1,w-1);
+  }
+  function tabla(res,extra){
+    let h='<tr><th>x₁</th><th>x₂</th><th>XOR</th>'+(extra?'<th>h₁</th><th>h₂</th>':'')+'<th>red</th></tr>';
+    P.forEach((p,k)=>{h+='<tr><td>'+p[0]+'</td><td>'+p[1]+'</td><td>'+T[k]+'</td>'+(extra?'<td>'+nf(extra[k][0],2)+'</td><td>'+nf(extra[k][1],2)+'</td>':'')+'<td style="color:var('+(res[k]===T[k]?'--good':'--warm')+');font-weight:700">'+res[k]+'</td></tr>';});
+    raiz.querySelector('#c1l2-tab').innerHTML=h;
+  }
+  function todo(){
+    const out=raiz.querySelector('#c1l2-out');
+    if(st.modo==='red'){
+      const f=x=>RedMini.predecir(red,new Float32Array(x))[0];
+      const W=red.W[0],b=red.b[0];
+      const res=plano(f,[[W[0],W[1],b[0],css('--c-red'),[6,4]],[W[2],W[3],b[1],css('--c-red'),[2,3]]]);oculto();
+      tabla(res,P.map(p=>RedMini.adelante(red,new Float32Array(p)).A[1]));
+      const ok=res.filter((v,k)=>v===T[k]).length,u=RedMini.evaluar(red,X,Y,0,4);
+      let t='<span class="big">Época '+nf(st.ep)+' · pérdida '+nf(u.perdida,3)+' · '+ok+' de 4 bien</span>';
+      if(ok===4)t+='<span class="ok">Resuelto. Cada neurona oculta traza una recta (las líneas azules punteadas). A la derecha, en el espacio de las neuronas ocultas, los cuatro casos ya se pueden separar con una sola recta: eso hace la neurona de salida.</span>';
+      else if(st.ep>=1500)t+='<span class="warn">Con esta semilla la red se atascó: las dos neuronas ocultas aprendieron casi lo mismo. Prueba otra semilla; con más neuronas ocultas pasa mucho menos.</span>';
+      else t+='<span>Pulsa «Entrenar»: la red ajusta sus 9 pesos con descenso por gradiente.</span>';
+      out.innerHTML=t;return;
+    }
+    const res=plano(x=>salidaNeurona(x),[[st.w1,st.w2,st.b,css('--ink')]]);tabla(res);
+    const ok=res.filter((v,k)=>v===T[k]).length;
+    let t='<span class="big">'+ok+' de 4 casos bien</span><span>La neurona responde 1 si '+nf(st.w1,1)+'·x₁ + '+nf(st.w2,1)+'·x₂ + ('+nf(st.b,1)+') > 0: todo lo que queda a un lado de la recta negra.</span>';
+    if(st.modo==='percep'){const e=st.errores;t+='<span>Época '+nf(st.ep)+' de la regla del perceptrón. Errores en las últimas épocas: '+e.slice(-12).join(' · ')+'.</span>';
+      if(st.ep>0)t+='<span class="warn">Nunca llega a cero: corrige un caso y descompone otro, en un ciclo sin fin. No existe ninguna recta que deje (0,1) y (1,0) de un lado y (0,0) y (1,1) del otro.</span>';}
+    else t+=ok===4?'<span class="ok">¿Cuatro de cuatro? Revisa: no debería ser posible.</span>':'<span>Busca pesos que acierten los cuatro casos. Vas a llegar a tres, nunca a cuatro.</span>';
+    out.innerHTML=t;
+  }
+  function nuevaRed(){red=RedMini.crear([2,2,1],{oculta:'tanh',salida:'sigmoide',semilla:st.semilla,escala:1});opt=RedMini.optimizador(red,{tipo:'adam',lr:0.05});st.ep=0;}
+  function pasoPercep(){let e=0;P.forEach((p,k)=>{const y=salidaNeurona(p),d=T[k]-y;if(d){e++;st.w1+=0.5*d*p[0];st.w2+=0.5*d*p[1];st.b+=0.5*d;}});st.errores.push(e);st.ep++;}
+  function pasoRed(k){for(let i=0;i<k&&st.ep<1500;i++){RedMini.epoca(red,opt,X,Y,{lote:4,rnd:RedMini.rnd(1)});st.ep++;}}
+  const go=raiz.querySelector('#c1l2-go');
+  function parar(){st.corre=false;clearTimeout(raf);go.textContent='Entrenar';}
+  function bucle(){if(!st.corre)return;
+    if(st.modo==='percep'){pasoPercep();sincronizar();}else pasoRed(3);
+    todo();
+    if((st.modo==='percep'&&st.ep>=60)||(st.modo==='red'&&(st.ep>=1500||RedMini.evaluar(red,X,Y,0,4).perdida<0.01))){parar();return;}
+    raf=setTimeout(bucle,st.modo==='percep'?250:30);}
+  go.addEventListener('click',()=>{if(st.corre){parar();return;}
+    if(quieto){if(st.modo==='percep'){for(let i=0;i<60;i++)pasoPercep();sincronizar();}else pasoRed(1500);todo();return;}
+    if(st.modo==='percep'&&st.ep>=60){st.ep=0;st.errores=[];}
+    if(st.modo==='red'&&st.ep>=1500)nuevaRed();
+    st.corre=true;go.textContent='Pausa';bucle();});
+  raiz.querySelector('#c1l2-sem').addEventListener('click',()=>{parar();if(st.modo==='red'){st.semilla=st.semilla%12+1;nuevaRed();}else{st.w1=0;st.w2=0;st.b=0;st.ep=0;st.errores=[];sincronizar();}todo();});
+  const sl=['w1','w2','b'].map(k=>raiz.querySelector('#c1l2-'+k));
+  function sincronizar(){sl.forEach((s,i)=>{const k=['w1','w2','b'][i];s.value=Math.max(-5,Math.min(5,st[k]));raiz.querySelector('#c1l2-'+k+'v').textContent=nf(st[k],1);});}
+  sl.forEach((s,i)=>s.addEventListener('input',()=>{const k=['w1','w2','b'][i];st[k]=+s.value;raiz.querySelector('#c1l2-'+k+'v').textContent=nf(st[k],1);todo();}));
+  raiz.querySelectorAll('[data-modo]').forEach(b=>b.addEventListener('click',()=>{parar();st.modo=b.dataset.modo;raiz.querySelectorAll('[data-modo]').forEach(x=>x.setAttribute('aria-pressed',x===b));
+    raiz.querySelector('#c1l2-ctls').hidden=st.modo==='red';raiz.querySelector('#c1l2-acc').hidden=st.modo==='mano';raiz.querySelector('#c1l2-oc').hidden=st.modo!=='red';
+    raiz.querySelector('#c1l2-sem').textContent=st.modo==='red'?'Otra semilla':'Empezar de cero';
+    if(st.modo==='percep'){st.w1=0;st.w2=0;st.b=0;st.ep=0;st.errores=[];sincronizar();}
+    if(st.modo==='red'){st.semilla=1;nuevaRed();}
+    todo();}));
+  let rt;const re=()=>{clearTimeout(rt);rt=setTimeout(todo,80);};
+  if(window.ResizeObserver)new ResizeObserver(re).observe(raiz.querySelector('#c1l2-plano'));
+  new MutationObserver(re).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','class']});
+  if(window.matchMedia)matchMedia('(prefers-color-scheme: dark)').addEventListener('change',re);
+  nuevaRed();todo();
+})();
+</script>
+<script>
+(function(){
+  const raiz=document.querySelector('[id="01-lab-1"]');
+  /* RedMini: red neuronal densa mínima del curso «Aprendizaje profundo» (Float32Array, sin dependencias).
+   Plantilla: copia este bloque DENTRO de la IIFE de tu lab (el motor solo admite <script> en línea).
+   Pesos: W[l] es una matriz de tam[l+1] filas por tam[l] columnas guardada por filas: W[l][j*n+i] es el
+   peso de la entrada i hacia la neurona j. b[l][j] es el sesgo de la neurona j.
+   Uso típico:
+     const R=RedMini, red=R.crear([196,64,10],{oculta:'relu',salida:'softmax',semilla:42});
+     const opt=R.optimizador(red,{tipo:'adam',lr:0.001});
+     const X=R.digitos(DIG_X), Y=R.etiquetas(DIG_Y);      // muestra del curso
+     const azar=R.rnd(42);
+     for(let e=0;e<15;e++) R.epoca(red,opt,X,Y,{n:DIG_NENT,lote:32,rnd:azar});
+     R.evaluar(red,X,Y,DIG_NENT,DIG_NENT+DIG_NPRU)  // {perdida, exactitud} en las 500 de prueba
+*/
+const RedMini=(function(){
+  /* Azar con semilla (mulberry32) y normal estándar (Box-Muller). */
+  function rnd(s){return function(){s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  function gauss(r){let u=0;while(!u)u=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*r());}
+  /* Activaciones ocultas: f(z) y su derivada d(z). */
+  const sg=z=>1/(1+Math.exp(-z));
+  const ACT={
+    relu:{f:z=>z>0?z:0,d:z=>z>0?1:0},
+    fuga:{f:z=>z>0?z:0.01*z,d:z=>z>0?1:0.01},              // ReLU con fuga (leaky ReLU)
+    sigmoide:{f:sg,d:z=>{const s=sg(z);return s*(1-s);}},
+    tanh:{f:z=>Math.tanh(z),d:z=>{const t=Math.tanh(z);return 1-t*t;}},
+    lineal:{f:z=>z,d:()=>1}
+  };
+  /* tam: neuronas por capa, de la entrada a la salida. oculta: activación de las capas ocultas.
+     salida: 'softmax' (clases, entropía cruzada), 'sigmoide' (sí/no, entropía cruzada binaria) o 'lineal' (números, ECM).
+     Inicialización: He (√(2/n)) para ReLU, Xavier (√(1/n)) para las demás, o la escala que se pase. */
+  function crear(tam,o={}){
+    const r=rnd(o.semilla??42),oc=o.oculta||'relu',sal=o.salida||'softmax',W=[],b=[];
+    for(let l=0;l<tam.length-1;l++){
+      const n=tam[l],m=tam[l+1],esc=o.escala??((oc==='relu'||oc==='fuga')?Math.sqrt(2/n):Math.sqrt(1/n));
+      const w=new Float32Array(n*m);for(let i=0;i<w.length;i++)w[i]=gauss(r)*esc;
+      W.push(w);b.push(new Float32Array(m));
+    }
+    return {tam:tam.slice(),oculta:oc,salida:sal,W,b};
+  }
+  function ceros(red){return {W:red.W.map(w=>new Float32Array(w.length)),b:red.b.map(v=>new Float32Array(v.length))};}
+  function aplicarSalida(tipo,z){
+    const m=z.length,y=new Float32Array(m);
+    if(tipo==='softmax'){let mx=-Infinity;for(let j=0;j<m;j++)if(z[j]>mx)mx=z[j];let s=0;
+      for(let j=0;j<m;j++){y[j]=Math.exp(z[j]-mx);s+=y[j];}for(let j=0;j<m;j++)y[j]/=s;}
+    else if(tipo==='sigmoide'){for(let j=0;j<m;j++)y[j]=sg(z[j]);}
+    else y.set(z);
+    return y;
+  }
+  /* Pase hacia adelante de UN ejemplo. Devuelve {A,Z,M}: A[l] activaciones (A[0]=x), Z[l] sumas ponderadas,
+     M[l] máscara de dropout (si o.dropout>0 y o.rnd). La salida es A[A.length-1]. */
+  function adelante(red,x,o){
+    const L=red.W.length,A=[x],Z=[null],M=[null],p=o&&o.dropout||0;let a=x;
+    for(let l=0;l<L;l++){
+      const n=red.tam[l],m=red.tam[l+1],w=red.W[l],bb=red.b[l],z=new Float32Array(m);
+      for(let j=0;j<m;j++){let s=bb[j];const k=j*n;for(let i=0;i<n;i++)s+=w[k+i]*a[i];z[j]=s;}
+      let y;
+      if(l<L-1){const f=ACT[red.oculta].f;y=new Float32Array(m);for(let j=0;j<m;j++)y[j]=f(z[j]);
+        if(p>0){const mk=new Float32Array(m),r=o.rnd;for(let j=0;j<m;j++){mk[j]=r()<p?0:1/(1-p);y[j]*=mk[j];}M.push(mk);} else M.push(null);}
+      else {y=aplicarSalida(red.salida,z);M.push(null);}
+      Z.push(z);A.push(y);a=y;
+    }
+    return {A,Z,M};
+  }
+  /* El objetivo puede ser un número (la clase para softmax, el valor para una sola salida) o un vector. */
+  function objetivo(red,t){
+    if(typeof t!=='number')return t;
+    const v=new Float32Array(red.tam[red.tam.length-1]);
+    if(red.salida==='softmax')v[t]=1;else v[0]=t;
+    return v;
+  }
+  function perdida(red,y,t){
+    t=objetivo(red,t);const m=y.length;let s=0;
+    if(red.salida==='softmax'){for(let j=0;j<m;j++)if(t[j]>0)s-=t[j]*Math.log(Math.max(y[j],1e-12));return s;}
+    if(red.salida==='sigmoide'){for(let j=0;j<m;j++){const q=Math.min(Math.max(y[j],1e-7),1-1e-7);s-=t[j]*Math.log(q)+(1-t[j])*Math.log(1-q);}return s;}
+    for(let j=0;j<m;j++)s+=(y[j]-t[j])**2;return s/m;            // error cuadrático medio
+  }
+  /* Pase hacia atrás de UN ejemplo: suma sus gradientes en G (de ceros(red)) y devuelve los deltas
+     ∂pérdida/∂z de cada capa (D[l], l=1..L), útiles para dibujar el gradiente que fluye hacia atrás. */
+  function atras(red,c,t,G){
+    t=objetivo(red,t);const L=red.W.length,yL=c.A[L],D=new Array(L+1);
+    let d=new Float32Array(yL.length);
+    for(let j=0;j<d.length;j++)d[j]=red.salida==='lineal'?2*(yL[j]-t[j])/d.length:yL[j]-t[j];
+    D[L]=d;
+    for(let l=L-1;l>=0;l--){
+      const n=red.tam[l],m=red.tam[l+1],w=red.W[l],a=c.A[l];
+      if(G){const gw=G.W[l],gb=G.b[l];
+        for(let j=0;j<m;j++){const dj=d[j];if(dj===0)continue;gb[j]+=dj;const k=j*n;for(let i=0;i<n;i++)gw[k+i]+=dj*a[i];}}
+      if(l>0){
+        const dp=new Float32Array(n),fd=ACT[red.oculta].d,z=c.Z[l],mk=c.M[l];
+        for(let j=0;j<m;j++){const dj=d[j];if(dj===0)continue;const k=j*n;for(let i=0;i<n;i++)dp[i]+=w[k+i]*dj;}
+        for(let i=0;i<n;i++)dp[i]*=fd(z[i])*(mk?mk[i]:1);
+        d=dp;D[l]=d;
+      }
+    }
+    return D;
+  }
+  /* Optimizadores: 'sgd', 'momento', 'rmsprop', 'adam'. paso(G,n) usa el promedio G/n y deja G en cero.
+     o.decaimiento: decaimiento de pesos L2 (no se aplica a los sesgos). */
+  function optimizador(red,o={}){
+    const tipo=o.tipo||'sgd',b1=o.beta1??0.9,b2=o.beta2??0.999,mu=o.momento??0.9,rho=o.rho??0.9,eps=1e-8,dec=o.decaimiento||0;
+    const Mo=ceros(red),Ve=ceros(red);let t=0;
+    return {tipo,lr:o.lr??(tipo==='adam'||tipo==='rmsprop'?0.001:0.05),
+      paso(G,n){
+        t++;const k=1/(n||1),lr=this.lr,c1=1-Math.pow(b1,t),c2=1-Math.pow(b2,t);
+        for(let l=0;l<red.W.length;l++){
+          [[red.W[l],G.W[l],Mo.W[l],Ve.W[l],dec],[red.b[l],G.b[l],Mo.b[l],Ve.b[l],0]].forEach(([P,g,m,v,dd])=>{
+            for(let i=0;i<P.length;i++){
+              const gi=g[i]*k+dd*P[i];g[i]=0;
+              if(tipo==='sgd')P[i]-=lr*gi;
+              else if(tipo==='momento'){m[i]=mu*m[i]+gi;P[i]-=lr*m[i];}
+              else if(tipo==='rmsprop'){v[i]=rho*v[i]+(1-rho)*gi*gi;P[i]-=lr*gi/(Math.sqrt(v[i])+eps);}
+              else {m[i]=b1*m[i]+(1-b1)*gi;v[i]=b2*v[i]+(1-b2)*gi*gi;P[i]-=lr*(m[i]/c1)/(Math.sqrt(v[i]/c2)+eps);}
+            }
+          });
+        }
+      }};
+  }
+  function argmax(v){let k=0;for(let j=1;j<v.length;j++)if(v[j]>v[k])k=j;return k;}
+  function acierta(red,y,t){
+    if(red.salida==='softmax')return argmax(y)===(typeof t==='number'?t:argmax(t));
+    if(red.salida==='sigmoide')return (y[0]>=0.5)===((typeof t==='number'?t:t[0])>=0.5);
+    return false;
+  }
+  function barajar(n,r){const a=new Int32Array(n);for(let i=0;i<n;i++)a[i]=i;for(let i=n-1;i>0;i--){const j=Math.floor(r()*(i+1));const x=a[i];a[i]=a[j];a[j]=x;}return a;}
+  /* Una época de minilotes sobre los ejemplos [desde, desde+n) de X (Float32Array plano, d valores por ejemplo)
+     y Y (etiquetas o vectores). Devuelve la pérdida y la exactitud promedio de la época (medidas durante el
+     entrenamiento). o: {n, desde, lote, rnd, dropout}. */
+  function epoca(red,opt,X,Y,o={}){
+    const d=red.tam[0],desde=o.desde||0,n=o.n??(Y.length-desde),lote=o.lote||32,r=o.rnd||Math.random;
+    const idx=barajar(n,r),G=ceros(red),fw={dropout:o.dropout||0,rnd:r};let suma=0,ac=0;
+    for(let s=0;s<n;s+=lote){
+      const e=Math.min(n,s+lote);
+      for(let q=s;q<e;q++){
+        const i=desde+idx[q],x=X.subarray(i*d,i*d+d),c=adelante(red,x,fw),y=c.A[c.A.length-1];
+        suma+=perdida(red,y,Y[i]);if(acierta(red,y,Y[i]))ac++;atras(red,c,Y[i],G);
+      }
+      opt.paso(G,e-s);
+    }
+    return {perdida:suma/n,exactitud:ac/n};
+  }
+  function predecir(red,x){const c=adelante(red,x);return c.A[c.A.length-1];}
+  /* Pérdida y exactitud promedio en los ejemplos [desde, hasta). */
+  function evaluar(red,X,Y,desde,hasta){
+    const d=red.tam[0];let s=0,ac=0;
+    for(let i=desde;i<hasta;i++){const y=predecir(red,X.subarray(i*d,i*d+d));s+=perdida(red,y,Y[i]);if(acierta(red,y,Y[i]))ac++;}
+    return {perdida:s/(hasta-desde),exactitud:ac/(hasta-desde)};
+  }
+  /* La muestra del curso: 98 bytes por imagen de 14x14 (4 bits por píxel). Devuelve valores de 0 a 1. */
+  function digitos(b64){const s=atob(b64),X=new Float32Array(s.length*2);
+    for(let i=0;i<s.length;i++){const v=s.charCodeAt(i);X[2*i]=(v>>4)/15;X[2*i+1]=(v&15)/15;}return X;}
+  function etiquetas(txt){const Y=new Uint8Array(txt.length);for(let i=0;i<txt.length;i++)Y[i]=txt.charCodeAt(i)-48;return Y;}
+  /* Pesos guardados en el lab: {tam, oculta, salida, esc:[eW0,eb0,eW1,eb1,…], datos: base64 de int8 (W0,b0,W1,b1,…)}.
+     Cada valor es int8 × su escala. */
+  function cargar(p){
+    const red={tam:p.tam.slice(),oculta:p.oculta,salida:p.salida,W:[],b:[]},s=atob(p.datos);let k=0,e=0;
+    const toma=n=>{const v=new Float32Array(n),esc=p.esc[e++];for(let i=0;i<n;i++){let c=s.charCodeAt(k++);if(c>127)c-=256;v[i]=c*esc;}return v;};
+    for(let l=0;l<p.tam.length-1;l++){red.W.push(toma(p.tam[l]*p.tam[l+1]));red.b.push(toma(p.tam[l+1]));}
+    return red;
+  }
+  function contarPesos(red){return red.W.reduce((s,w)=>s+w.length,0)+red.b.reduce((s,v)=>s+v.length,0);}
+  return {rnd,gauss,ACT,crear,ceros,adelante,atras,perdida,optimizador,epoca,evaluar,predecir,argmax,barajar,digitos,etiquetas,cargar,contarPesos};
+})();
+
+  /* Juguete2D: datos de juguete en el plano y dibujo de la frontera de una red (para labs con RedMini).
+   Copia este bloque dentro de la IIFE del lab, después de RedMini.
+   Juguete2D.datos(tipo, n, semilla) → {X: Float32Array(2n), Y: Float32Array(n)}; tipo: 'circulo','xor','lunas','espiral'.
+   Coordenadas en [-1, 1]. Clase 0 = círculo azul (--accent), clase 1 = triángulo rojo (--warm).
+   Juguete2D.dibujar(canvas, red, datos, raiz, {celdas}) pinta la probabilidad de clase 1 en cada celda y los puntos. */
+const Juguete2D=(function(){
+  function datos(tipo,n,semilla){
+    const r=RedMini.rnd(semilla??42),g=()=>RedMini.gauss(r),X=new Float32Array(2*n),Y=new Float32Array(n);
+    for(let i=0;i<n;i++){
+      let x,y,c;
+      if(tipo==='circulo'){const rad=i%2?0.15+0.35*Math.sqrt(r()):0.68+0.27*r(),a=2*Math.PI*r();x=rad*Math.cos(a);y=rad*Math.sin(a);c=i%2;}
+      else if(tipo==='xor'){x=2*r()-1;y=2*r()-1;const m=0.06;x+=x>0?m:-m;y+=y>0?m:-m;c=x*y>0?0:1;}
+      else if(tipo==='lunas'){const a=Math.PI*r();c=i%2;if(c===0){x=Math.cos(a)-0.5;y=Math.sin(a)-0.2;}else{x=0.5-Math.cos(a);y=0.2-Math.sin(a);}x=x*0.62+0.07*g();y=y*0.75+0.07*g();}
+      else {const t=(i>>1)/(n/2),c0=i%2,a=t*3.3*Math.PI+c0*Math.PI,rad=0.08+0.85*t;x=rad*Math.cos(a)+0.03*g();y=rad*Math.sin(a)+0.03*g();c=c0;}
+      X[2*i]=Math.max(-1,Math.min(1,x));X[2*i+1]=Math.max(-1,Math.min(1,y));Y[i]=c;
+    }
+    return {X,Y,n};
+  }
+  function rgb(h){h=(h||'').trim();if(h.startsWith('rgb')){return h.match(/[\d.]+/g).slice(0,3).map(Number);}
+    const m=h.replace('#','');const f=m.length===3?m.split('').map(q=>q+q).join(''):m;return [0,2,4].map(i=>parseInt(f.slice(i,i+2),16)||0);}
+  function lienzo(cv){const w=cv.clientWidth||300,h=Math.round(w*(+cv.dataset.prop||1)),d=window.devicePixelRatio||1;
+    cv.width=Math.round(w*d);cv.height=Math.round(h*d);cv.style.height=h+'px';const c=cv.getContext('2d');c.setTransform(d,0,0,d,0,0);return {c,w,h};}
+  function dibujar(cv,red,D,raiz,o={}){
+    const {c,w,h}=lienzo(cv),css=n=>getComputedStyle(raiz).getPropertyValue(n).trim(),N=o.celdas||40;
+    const card=rgb(css('--card')),az=rgb(css('--accent')),ro=rgb(css('--warm'));
+    const X=x=>(x+1)/2*w,Y=y=>(1-(y+1)/2)*h;
+    if(red){const im=c.createImageData(N,N),x=new Float32Array(2);
+      for(let j=0;j<N;j++)for(let i=0;i<N;i++){x[0]=-1+(i+.5)*2/N;x[1]=1-(j+.5)*2/N;const p=RedMini.predecir(red,x)[0];
+        const col=p>=.5?ro:az,t=Math.min(1,Math.abs(p-.5)*2)*0.42;const k=4*(j*N+i);
+        for(let q=0;q<3;q++)im.data[k+q]=Math.round(card[q]+(col[q]-card[q])*t);im.data[k+3]=255;}
+      const of=document.createElement('canvas');of.width=N;of.height=N;of.getContext('2d').putImageData(im,0,0);
+      c.imageSmoothingEnabled=true;c.drawImage(of,0,0,w,h);
+      // frontera p = 0,5: contorno por celdas finas
+      const M=80,v=new Float32Array((M+1)*(M+1));for(let j=0;j<=M;j++)for(let i=0;i<=M;i++){x[0]=-1+2*i/M;x[1]=1-2*j/M;v[j*(M+1)+i]=RedMini.predecir(red,x)[0]-.5;}
+      c.strokeStyle=css('--ink');c.lineWidth=1.6;c.beginPath();const cw=w/M,ch=h/M;
+      for(let j=0;j<M;j++)for(let i=0;i<M;i++){const a=v[j*(M+1)+i],b=v[j*(M+1)+i+1],d=v[(j+1)*(M+1)+i],e=v[(j+1)*(M+1)+i+1];const P=[];
+        const cr=(p,q,x0,y0,x1,y1)=>{if((p<0)!==(q<0)){const t=p/(p-q);P.push([x0+(x1-x0)*t,y0+(y1-y0)*t]);}};
+        cr(a,b,i*cw,j*ch,(i+1)*cw,j*ch);cr(b,e,(i+1)*cw,j*ch,(i+1)*cw,(j+1)*ch);cr(d,e,i*cw,(j+1)*ch,(i+1)*cw,(j+1)*ch);cr(a,d,i*cw,j*ch,i*cw,(j+1)*ch);
+        if(P.length>=2){c.moveTo(P[0][0],P[0][1]);c.lineTo(P[1][0],P[1][1]);}if(P.length===4){c.moveTo(P[2][0],P[2][1]);c.lineTo(P[3][0],P[3][1]);}}
+      c.stroke();
+    } else {c.fillStyle=css('--card');c.fillRect(0,0,w,h);}
+    c.strokeStyle=css('--grid');c.lineWidth=1;c.beginPath();c.moveTo(X(0),0);c.lineTo(X(0),h);c.moveTo(0,Y(0));c.lineTo(w,Y(0));c.stroke();
+    const s=o.punto||3.4;
+    for(let i=0;i<D.n;i++){const x=X(D.X[2*i]),y=Y(D.X[2*i+1]);
+      if(D.Y[i]>=.5){c.fillStyle=css('--warm');c.beginPath();c.moveTo(x,y-s*1.15);c.lineTo(x+s,y+s*.85);c.lineTo(x-s,y+s*.85);c.closePath();c.fill();}
+      else {c.fillStyle=css('--accent');c.beginPath();c.arc(x,y,s*.85,0,7);c.fill();}}
+    c.strokeStyle=css('--line');c.strokeRect(.5,.5,w-1,h-1);
+    return {X,Y,w,h,c};
+  }
+  return {datos,dibujar,lienzo,rgb};
+})();
+
+  const nf=(n,d=0)=>{const s=Math.abs(n).toFixed(d).split('.');s[0]=s[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.');return (n<0?'−':'')+s.join(',');};
+  const pct=(x,d=0)=>nf(100*x,d)+' %';
+  const css=n=>getComputedStyle(raiz).getPropertyValue(n).trim();
+  const quieto=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const st={datos:'circulo',act:'tanh',capas:1,n:2,semilla:42,corre:false,ep:0,hist:[],ult:null};
+  let D,red,opt,azar,raf=0;
+  function nueva(){
+    D=Juguete2D.datos(st.datos,240,7);
+    const tam=[2];for(let i=0;i<st.capas;i++)tam.push(st.n);tam.push(1);
+    red=RedMini.crear(tam,{oculta:st.act,salida:'sigmoide',semilla:st.semilla});
+    opt=RedMini.optimizador(red,{tipo:'adam',lr:0.02});azar=RedMini.rnd(st.semilla);st.ep=0;st.hist=[];st.ult=RedMini.evaluar(red,D.X,D.Y,0,D.n);
+  }
+  function curva(){
+    const cv=raiz.querySelector('#c1l1-curva'),{c,w,h}=Juguete2D.lienzo(cv),L=36,R=8,T=8,B=24,W=w-L-R,H=h-T-B;
+    c.fillStyle=css('--card');c.fillRect(0,0,w,h);c.font='11px '+css('--f-display');c.fillStyle=css('--muted');
+    const emax=Math.max(100,st.ep),ymax=0.8,X=e=>L+e/emax*W,Y=v=>T+H-Math.min(v,ymax)/ymax*H;
+    c.strokeStyle=css('--grid');c.textAlign='right';[0,.2,.4,.6,.8].forEach(v=>{c.beginPath();c.moveTo(L,Y(v));c.lineTo(L+W,Y(v));c.stroke();c.fillText(nf(v,1),L-4,Y(v)+4);});
+    c.textAlign='center';c.fillText('época '+nf(emax),L+W-24,h-6);c.fillText('0',L,h-6);
+    c.strokeStyle=css('--c-apl');c.lineWidth=2;c.beginPath();st.hist.forEach((v,i)=>{const x=X(i+1),y=Y(v);i?c.lineTo(x,y):c.moveTo(x,y);});c.stroke();
+  }
+  function diagrama(){
+    const cv=raiz.querySelector('#c1l1-red'),{c,w,h}=Juguete2D.lienzo(cv),tam=red.tam,nc=tam.length;
+    c.clearRect(0,0,w,h);const px=l=>24+l*(w-48)/(nc-1),py=(l,j)=>h/2+(j-(tam[l]-1)/2)*Math.min(18,(h-16)/Math.max(...tam));
+    let mx=1e-6;red.W.forEach(W=>W.forEach(v=>{mx=Math.max(mx,Math.abs(v));}));
+    for(let l=0;l<nc-1;l++)for(let j=0;j<tam[l+1];j++)for(let i=0;i<tam[l];i++){const v=red.W[l][j*tam[l]+i];
+      c.strokeStyle=css(v>=0?'--accent':'--warm');c.globalAlpha=.25+.75*Math.abs(v)/mx;c.lineWidth=.5+2.5*Math.abs(v)/mx;
+      c.beginPath();c.moveTo(px(l),py(l,i));c.lineTo(px(l+1),py(l+1,j));c.stroke();}
+    c.globalAlpha=1;
+    for(let l=0;l<nc;l++)for(let j=0;j<tam[l];j++){c.beginPath();c.arc(px(l),py(l,j),6,0,7);
+      c.fillStyle=css(l===0?'--d-sis-s':l===nc-1?'--c-apl-s':'--c-red-s');c.fill();c.strokeStyle=css(l===0?'--d-sis':l===nc-1?'--c-apl':'--c-red');c.lineWidth=1.5;c.stroke();}
+  }
+  function leer(){
+    const u=st.ult,tam=red.tam,pesos=RedMini.contarPesos(red);
+    let txt='<span class="big">Época '+nf(st.ep)+' · pérdida '+nf(u.perdida,3)+' · aciertos '+pct(u.exactitud)+'</span>';
+    txt+='<span>Red '+tam.join(' → ')+': '+nf(pesos)+' pesos y sesgos ajustables.</span>';
+    if(st.capas===0)txt+='<span class="warn">Sin capas ocultas, la red es una sola neurona: su frontera es siempre una recta.</span>';
+    else if(st.ep>=300&&u.exactitud<0.9)txt+='<span class="warn">La red no alcanza a separar las clases: le falta capacidad (más neuronas o más capas) o se atascó (reinicia los pesos).</span>';
+    else if(u.exactitud>=0.99&&st.ep>0)txt+='<span class="ok">Separó las dos clases. Cada neurona oculta aporta un tramo de frontera; la salida los combina.</span>';
+    raiz.querySelector('#c1l1-out').innerHTML=txt;
+  }
+  function todo(){Juguete2D.dibujar(raiz.querySelector('#c1l1-plano'),red,D,raiz,{celdas:44});curva();diagrama();leer();}
+  function paso(k){for(let i=0;i<k;i++){st.ult=RedMini.epoca(red,opt,D.X,D.Y,{lote:16,rnd:azar});st.ep++;st.hist.push(st.ult.perdida);}}
+  const go=raiz.querySelector('#c1l1-go');
+  function bucle(){if(!st.corre)return;const t0=performance.now();while(performance.now()-t0<22){paso(1);if(st.ep>=1000)break;}todo();
+    if(st.ep>=1000){parar();return;}raf=requestAnimationFrame(bucle);}
+  function parar(){st.corre=false;cancelAnimationFrame(raf);go.textContent=st.ep>=1000?'Listo (1.000 épocas)':'Entrenar';}
+  go.addEventListener('click',()=>{
+    if(st.corre){parar();return;}
+    if(st.ep>=1000)return;
+    if(quieto){paso(300);todo();go.textContent='Entrenar 300 épocas más';return;}
+    st.corre=true;go.textContent='Pausa';bucle();});
+  function reinicio(){parar();nueva();go.textContent='Entrenar';todo();}
+  raiz.querySelector('#c1l1-reset').addEventListener('click',()=>{st.semilla=(st.semilla*7+3)%997;reinicio();});
+  raiz.querySelector('#c1l1-datos').addEventListener('change',e=>{st.datos=e.target.value;reinicio();});
+  raiz.querySelector('#c1l1-act').addEventListener('change',e=>{st.act=e.target.value;reinicio();});
+  raiz.querySelectorAll('[data-capas]').forEach(b=>b.addEventListener('click',()=>{st.capas=+b.dataset.capas;raiz.querySelectorAll('[data-capas]').forEach(x=>x.setAttribute('aria-pressed',x===b));reinicio();}));
+  const sl=raiz.querySelector('#c1l1-n');sl.addEventListener('input',()=>{st.n=+sl.value;raiz.querySelector('#c1l1-nv').textContent=st.n;reinicio();});
+  let rt;const re=()=>{clearTimeout(rt);rt=setTimeout(todo,80);};
+  if(window.ResizeObserver)new ResizeObserver(re).observe(raiz.querySelector('#c1l1-plano'));
+  new MutationObserver(re).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','class']});
+  if(window.matchMedia)matchMedia('(prefers-color-scheme: dark)').addEventListener('change',re);
+  nueva();todo();
+})();
+</script>
+<script>
+(function(){
+  const raiz=document.querySelector('[id="01-lab-3"]');
+  /* RedMini: red neuronal densa mínima del curso «Aprendizaje profundo» (Float32Array, sin dependencias).
+   Plantilla: copia este bloque DENTRO de la IIFE de tu lab (el motor solo admite <script> en línea).
+   Pesos: W[l] es una matriz de tam[l+1] filas por tam[l] columnas guardada por filas: W[l][j*n+i] es el
+   peso de la entrada i hacia la neurona j. b[l][j] es el sesgo de la neurona j.
+   Uso típico:
+     const R=RedMini, red=R.crear([196,64,10],{oculta:'relu',salida:'softmax',semilla:42});
+     const opt=R.optimizador(red,{tipo:'adam',lr:0.001});
+     const X=R.digitos(DIG_X), Y=R.etiquetas(DIG_Y);      // muestra del curso
+     const azar=R.rnd(42);
+     for(let e=0;e<15;e++) R.epoca(red,opt,X,Y,{n:DIG_NENT,lote:32,rnd:azar});
+     R.evaluar(red,X,Y,DIG_NENT,DIG_NENT+DIG_NPRU)  // {perdida, exactitud} en las 500 de prueba
+*/
+const RedMini=(function(){
+  /* Azar con semilla (mulberry32) y normal estándar (Box-Muller). */
+  function rnd(s){return function(){s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  function gauss(r){let u=0;while(!u)u=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*r());}
+  /* Activaciones ocultas: f(z) y su derivada d(z). */
+  const sg=z=>1/(1+Math.exp(-z));
+  const ACT={
+    relu:{f:z=>z>0?z:0,d:z=>z>0?1:0},
+    fuga:{f:z=>z>0?z:0.01*z,d:z=>z>0?1:0.01},              // ReLU con fuga (leaky ReLU)
+    sigmoide:{f:sg,d:z=>{const s=sg(z);return s*(1-s);}},
+    tanh:{f:z=>Math.tanh(z),d:z=>{const t=Math.tanh(z);return 1-t*t;}},
+    lineal:{f:z=>z,d:()=>1}
+  };
+  /* tam: neuronas por capa, de la entrada a la salida. oculta: activación de las capas ocultas.
+     salida: 'softmax' (clases, entropía cruzada), 'sigmoide' (sí/no, entropía cruzada binaria) o 'lineal' (números, ECM).
+     Inicialización: He (√(2/n)) para ReLU, Xavier (√(1/n)) para las demás, o la escala que se pase. */
+  function crear(tam,o={}){
+    const r=rnd(o.semilla??42),oc=o.oculta||'relu',sal=o.salida||'softmax',W=[],b=[];
+    for(let l=0;l<tam.length-1;l++){
+      const n=tam[l],m=tam[l+1],esc=o.escala??((oc==='relu'||oc==='fuga')?Math.sqrt(2/n):Math.sqrt(1/n));
+      const w=new Float32Array(n*m);for(let i=0;i<w.length;i++)w[i]=gauss(r)*esc;
+      W.push(w);b.push(new Float32Array(m));
+    }
+    return {tam:tam.slice(),oculta:oc,salida:sal,W,b};
+  }
+  function ceros(red){return {W:red.W.map(w=>new Float32Array(w.length)),b:red.b.map(v=>new Float32Array(v.length))};}
+  function aplicarSalida(tipo,z){
+    const m=z.length,y=new Float32Array(m);
+    if(tipo==='softmax'){let mx=-Infinity;for(let j=0;j<m;j++)if(z[j]>mx)mx=z[j];let s=0;
+      for(let j=0;j<m;j++){y[j]=Math.exp(z[j]-mx);s+=y[j];}for(let j=0;j<m;j++)y[j]/=s;}
+    else if(tipo==='sigmoide'){for(let j=0;j<m;j++)y[j]=sg(z[j]);}
+    else y.set(z);
+    return y;
+  }
+  /* Pase hacia adelante de UN ejemplo. Devuelve {A,Z,M}: A[l] activaciones (A[0]=x), Z[l] sumas ponderadas,
+     M[l] máscara de dropout (si o.dropout>0 y o.rnd). La salida es A[A.length-1]. */
+  function adelante(red,x,o){
+    const L=red.W.length,A=[x],Z=[null],M=[null],p=o&&o.dropout||0;let a=x;
+    for(let l=0;l<L;l++){
+      const n=red.tam[l],m=red.tam[l+1],w=red.W[l],bb=red.b[l],z=new Float32Array(m);
+      for(let j=0;j<m;j++){let s=bb[j];const k=j*n;for(let i=0;i<n;i++)s+=w[k+i]*a[i];z[j]=s;}
+      let y;
+      if(l<L-1){const f=ACT[red.oculta].f;y=new Float32Array(m);for(let j=0;j<m;j++)y[j]=f(z[j]);
+        if(p>0){const mk=new Float32Array(m),r=o.rnd;for(let j=0;j<m;j++){mk[j]=r()<p?0:1/(1-p);y[j]*=mk[j];}M.push(mk);} else M.push(null);}
+      else {y=aplicarSalida(red.salida,z);M.push(null);}
+      Z.push(z);A.push(y);a=y;
+    }
+    return {A,Z,M};
+  }
+  /* El objetivo puede ser un número (la clase para softmax, el valor para una sola salida) o un vector. */
+  function objetivo(red,t){
+    if(typeof t!=='number')return t;
+    const v=new Float32Array(red.tam[red.tam.length-1]);
+    if(red.salida==='softmax')v[t]=1;else v[0]=t;
+    return v;
+  }
+  function perdida(red,y,t){
+    t=objetivo(red,t);const m=y.length;let s=0;
+    if(red.salida==='softmax'){for(let j=0;j<m;j++)if(t[j]>0)s-=t[j]*Math.log(Math.max(y[j],1e-12));return s;}
+    if(red.salida==='sigmoide'){for(let j=0;j<m;j++){const q=Math.min(Math.max(y[j],1e-7),1-1e-7);s-=t[j]*Math.log(q)+(1-t[j])*Math.log(1-q);}return s;}
+    for(let j=0;j<m;j++)s+=(y[j]-t[j])**2;return s/m;            // error cuadrático medio
+  }
+  /* Pase hacia atrás de UN ejemplo: suma sus gradientes en G (de ceros(red)) y devuelve los deltas
+     ∂pérdida/∂z de cada capa (D[l], l=1..L), útiles para dibujar el gradiente que fluye hacia atrás. */
+  function atras(red,c,t,G){
+    t=objetivo(red,t);const L=red.W.length,yL=c.A[L],D=new Array(L+1);
+    let d=new Float32Array(yL.length);
+    for(let j=0;j<d.length;j++)d[j]=red.salida==='lineal'?2*(yL[j]-t[j])/d.length:yL[j]-t[j];
+    D[L]=d;
+    for(let l=L-1;l>=0;l--){
+      const n=red.tam[l],m=red.tam[l+1],w=red.W[l],a=c.A[l];
+      if(G){const gw=G.W[l],gb=G.b[l];
+        for(let j=0;j<m;j++){const dj=d[j];if(dj===0)continue;gb[j]+=dj;const k=j*n;for(let i=0;i<n;i++)gw[k+i]+=dj*a[i];}}
+      if(l>0){
+        const dp=new Float32Array(n),fd=ACT[red.oculta].d,z=c.Z[l],mk=c.M[l];
+        for(let j=0;j<m;j++){const dj=d[j];if(dj===0)continue;const k=j*n;for(let i=0;i<n;i++)dp[i]+=w[k+i]*dj;}
+        for(let i=0;i<n;i++)dp[i]*=fd(z[i])*(mk?mk[i]:1);
+        d=dp;D[l]=d;
+      }
+    }
+    return D;
+  }
+  /* Optimizadores: 'sgd', 'momento', 'rmsprop', 'adam'. paso(G,n) usa el promedio G/n y deja G en cero.
+     o.decaimiento: decaimiento de pesos L2 (no se aplica a los sesgos). */
+  function optimizador(red,o={}){
+    const tipo=o.tipo||'sgd',b1=o.beta1??0.9,b2=o.beta2??0.999,mu=o.momento??0.9,rho=o.rho??0.9,eps=1e-8,dec=o.decaimiento||0;
+    const Mo=ceros(red),Ve=ceros(red);let t=0;
+    return {tipo,lr:o.lr??(tipo==='adam'||tipo==='rmsprop'?0.001:0.05),
+      paso(G,n){
+        t++;const k=1/(n||1),lr=this.lr,c1=1-Math.pow(b1,t),c2=1-Math.pow(b2,t);
+        for(let l=0;l<red.W.length;l++){
+          [[red.W[l],G.W[l],Mo.W[l],Ve.W[l],dec],[red.b[l],G.b[l],Mo.b[l],Ve.b[l],0]].forEach(([P,g,m,v,dd])=>{
+            for(let i=0;i<P.length;i++){
+              const gi=g[i]*k+dd*P[i];g[i]=0;
+              if(tipo==='sgd')P[i]-=lr*gi;
+              else if(tipo==='momento'){m[i]=mu*m[i]+gi;P[i]-=lr*m[i];}
+              else if(tipo==='rmsprop'){v[i]=rho*v[i]+(1-rho)*gi*gi;P[i]-=lr*gi/(Math.sqrt(v[i])+eps);}
+              else {m[i]=b1*m[i]+(1-b1)*gi;v[i]=b2*v[i]+(1-b2)*gi*gi;P[i]-=lr*(m[i]/c1)/(Math.sqrt(v[i]/c2)+eps);}
+            }
+          });
+        }
+      }};
+  }
+  function argmax(v){let k=0;for(let j=1;j<v.length;j++)if(v[j]>v[k])k=j;return k;}
+  function acierta(red,y,t){
+    if(red.salida==='softmax')return argmax(y)===(typeof t==='number'?t:argmax(t));
+    if(red.salida==='sigmoide')return (y[0]>=0.5)===((typeof t==='number'?t:t[0])>=0.5);
+    return false;
+  }
+  function barajar(n,r){const a=new Int32Array(n);for(let i=0;i<n;i++)a[i]=i;for(let i=n-1;i>0;i--){const j=Math.floor(r()*(i+1));const x=a[i];a[i]=a[j];a[j]=x;}return a;}
+  /* Una época de minilotes sobre los ejemplos [desde, desde+n) de X (Float32Array plano, d valores por ejemplo)
+     y Y (etiquetas o vectores). Devuelve la pérdida y la exactitud promedio de la época (medidas durante el
+     entrenamiento). o: {n, desde, lote, rnd, dropout}. */
+  function epoca(red,opt,X,Y,o={}){
+    const d=red.tam[0],desde=o.desde||0,n=o.n??(Y.length-desde),lote=o.lote||32,r=o.rnd||Math.random;
+    const idx=barajar(n,r),G=ceros(red),fw={dropout:o.dropout||0,rnd:r};let suma=0,ac=0;
+    for(let s=0;s<n;s+=lote){
+      const e=Math.min(n,s+lote);
+      for(let q=s;q<e;q++){
+        const i=desde+idx[q],x=X.subarray(i*d,i*d+d),c=adelante(red,x,fw),y=c.A[c.A.length-1];
+        suma+=perdida(red,y,Y[i]);if(acierta(red,y,Y[i]))ac++;atras(red,c,Y[i],G);
+      }
+      opt.paso(G,e-s);
+    }
+    return {perdida:suma/n,exactitud:ac/n};
+  }
+  function predecir(red,x){const c=adelante(red,x);return c.A[c.A.length-1];}
+  /* Pérdida y exactitud promedio en los ejemplos [desde, hasta). */
+  function evaluar(red,X,Y,desde,hasta){
+    const d=red.tam[0];let s=0,ac=0;
+    for(let i=desde;i<hasta;i++){const y=predecir(red,X.subarray(i*d,i*d+d));s+=perdida(red,y,Y[i]);if(acierta(red,y,Y[i]))ac++;}
+    return {perdida:s/(hasta-desde),exactitud:ac/(hasta-desde)};
+  }
+  /* La muestra del curso: 98 bytes por imagen de 14x14 (4 bits por píxel). Devuelve valores de 0 a 1. */
+  function digitos(b64){const s=atob(b64),X=new Float32Array(s.length*2);
+    for(let i=0;i<s.length;i++){const v=s.charCodeAt(i);X[2*i]=(v>>4)/15;X[2*i+1]=(v&15)/15;}return X;}
+  function etiquetas(txt){const Y=new Uint8Array(txt.length);for(let i=0;i<txt.length;i++)Y[i]=txt.charCodeAt(i)-48;return Y;}
+  /* Pesos guardados en el lab: {tam, oculta, salida, esc:[eW0,eb0,eW1,eb1,…], datos: base64 de int8 (W0,b0,W1,b1,…)}.
+     Cada valor es int8 × su escala. */
+  function cargar(p){
+    const red={tam:p.tam.slice(),oculta:p.oculta,salida:p.salida,W:[],b:[]},s=atob(p.datos);let k=0,e=0;
+    const toma=n=>{const v=new Float32Array(n),esc=p.esc[e++];for(let i=0;i<n;i++){let c=s.charCodeAt(k++);if(c>127)c-=256;v[i]=c*esc;}return v;};
+    for(let l=0;l<p.tam.length-1;l++){red.W.push(toma(p.tam[l]*p.tam[l+1]));red.b.push(toma(p.tam[l+1]));}
+    return red;
+  }
+  function contarPesos(red){return red.W.reduce((s,w)=>s+w.length,0)+red.b.reduce((s,v)=>s+v.length,0);}
+  return {rnd,gauss,ACT,crear,ceros,adelante,atras,perdida,optimizador,epoca,evaluar,predecir,argmax,barajar,digitos,etiquetas,cargar,contarPesos};
+})();
+
+  /* Juguete2D: datos de juguete en el plano y dibujo de la frontera de una red (para labs con RedMini).
+   Copia este bloque dentro de la IIFE del lab, después de RedMini.
+   Juguete2D.datos(tipo, n, semilla) → {X: Float32Array(2n), Y: Float32Array(n)}; tipo: 'circulo','xor','lunas','espiral'.
+   Coordenadas en [-1, 1]. Clase 0 = círculo azul (--accent), clase 1 = triángulo rojo (--warm).
+   Juguete2D.dibujar(canvas, red, datos, raiz, {celdas}) pinta la probabilidad de clase 1 en cada celda y los puntos. */
+const Juguete2D=(function(){
+  function datos(tipo,n,semilla){
+    const r=RedMini.rnd(semilla??42),g=()=>RedMini.gauss(r),X=new Float32Array(2*n),Y=new Float32Array(n);
+    for(let i=0;i<n;i++){
+      let x,y,c;
+      if(tipo==='circulo'){const rad=i%2?0.15+0.35*Math.sqrt(r()):0.68+0.27*r(),a=2*Math.PI*r();x=rad*Math.cos(a);y=rad*Math.sin(a);c=i%2;}
+      else if(tipo==='xor'){x=2*r()-1;y=2*r()-1;const m=0.06;x+=x>0?m:-m;y+=y>0?m:-m;c=x*y>0?0:1;}
+      else if(tipo==='lunas'){const a=Math.PI*r();c=i%2;if(c===0){x=Math.cos(a)-0.5;y=Math.sin(a)-0.2;}else{x=0.5-Math.cos(a);y=0.2-Math.sin(a);}x=x*0.62+0.07*g();y=y*0.75+0.07*g();}
+      else {const t=(i>>1)/(n/2),c0=i%2,a=t*3.3*Math.PI+c0*Math.PI,rad=0.08+0.85*t;x=rad*Math.cos(a)+0.03*g();y=rad*Math.sin(a)+0.03*g();c=c0;}
+      X[2*i]=Math.max(-1,Math.min(1,x));X[2*i+1]=Math.max(-1,Math.min(1,y));Y[i]=c;
+    }
+    return {X,Y,n};
+  }
+  function rgb(h){h=(h||'').trim();if(h.startsWith('rgb')){return h.match(/[\d.]+/g).slice(0,3).map(Number);}
+    const m=h.replace('#','');const f=m.length===3?m.split('').map(q=>q+q).join(''):m;return [0,2,4].map(i=>parseInt(f.slice(i,i+2),16)||0);}
+  function lienzo(cv){const w=cv.clientWidth||300,h=Math.round(w*(+cv.dataset.prop||1)),d=window.devicePixelRatio||1;
+    cv.width=Math.round(w*d);cv.height=Math.round(h*d);cv.style.height=h+'px';const c=cv.getContext('2d');c.setTransform(d,0,0,d,0,0);return {c,w,h};}
+  function dibujar(cv,red,D,raiz,o={}){
+    const {c,w,h}=lienzo(cv),css=n=>getComputedStyle(raiz).getPropertyValue(n).trim(),N=o.celdas||40;
+    const card=rgb(css('--card')),az=rgb(css('--accent')),ro=rgb(css('--warm'));
+    const X=x=>(x+1)/2*w,Y=y=>(1-(y+1)/2)*h;
+    if(red){const im=c.createImageData(N,N),x=new Float32Array(2);
+      for(let j=0;j<N;j++)for(let i=0;i<N;i++){x[0]=-1+(i+.5)*2/N;x[1]=1-(j+.5)*2/N;const p=RedMini.predecir(red,x)[0];
+        const col=p>=.5?ro:az,t=Math.min(1,Math.abs(p-.5)*2)*0.42;const k=4*(j*N+i);
+        for(let q=0;q<3;q++)im.data[k+q]=Math.round(card[q]+(col[q]-card[q])*t);im.data[k+3]=255;}
+      const of=document.createElement('canvas');of.width=N;of.height=N;of.getContext('2d').putImageData(im,0,0);
+      c.imageSmoothingEnabled=true;c.drawImage(of,0,0,w,h);
+      // frontera p = 0,5: contorno por celdas finas
+      const M=80,v=new Float32Array((M+1)*(M+1));for(let j=0;j<=M;j++)for(let i=0;i<=M;i++){x[0]=-1+2*i/M;x[1]=1-2*j/M;v[j*(M+1)+i]=RedMini.predecir(red,x)[0]-.5;}
+      c.strokeStyle=css('--ink');c.lineWidth=1.6;c.beginPath();const cw=w/M,ch=h/M;
+      for(let j=0;j<M;j++)for(let i=0;i<M;i++){const a=v[j*(M+1)+i],b=v[j*(M+1)+i+1],d=v[(j+1)*(M+1)+i],e=v[(j+1)*(M+1)+i+1];const P=[];
+        const cr=(p,q,x0,y0,x1,y1)=>{if((p<0)!==(q<0)){const t=p/(p-q);P.push([x0+(x1-x0)*t,y0+(y1-y0)*t]);}};
+        cr(a,b,i*cw,j*ch,(i+1)*cw,j*ch);cr(b,e,(i+1)*cw,j*ch,(i+1)*cw,(j+1)*ch);cr(d,e,i*cw,(j+1)*ch,(i+1)*cw,(j+1)*ch);cr(a,d,i*cw,j*ch,i*cw,(j+1)*ch);
+        if(P.length>=2){c.moveTo(P[0][0],P[0][1]);c.lineTo(P[1][0],P[1][1]);}if(P.length===4){c.moveTo(P[2][0],P[2][1]);c.lineTo(P[3][0],P[3][1]);}}
+      c.stroke();
+    } else {c.fillStyle=css('--card');c.fillRect(0,0,w,h);}
+    c.strokeStyle=css('--grid');c.lineWidth=1;c.beginPath();c.moveTo(X(0),0);c.lineTo(X(0),h);c.moveTo(0,Y(0));c.lineTo(w,Y(0));c.stroke();
+    const s=o.punto||3.4;
+    for(let i=0;i<D.n;i++){const x=X(D.X[2*i]),y=Y(D.X[2*i+1]);
+      if(D.Y[i]>=.5){c.fillStyle=css('--warm');c.beginPath();c.moveTo(x,y-s*1.15);c.lineTo(x+s,y+s*.85);c.lineTo(x-s,y+s*.85);c.closePath();c.fill();}
+      else {c.fillStyle=css('--accent');c.beginPath();c.arc(x,y,s*.85,0,7);c.fill();}}
+    c.strokeStyle=css('--line');c.strokeRect(.5,.5,w-1,h-1);
+    return {X,Y,w,h,c};
+  }
+  return {datos,dibujar,lienzo,rgb};
+})();
+
+  RedMini.ACT.escalon={f:z=>z>0?1:0,d:()=>0};      // su derivada es cero en casi todas partes
+  const nf=(n,d=0)=>{const s=Math.abs(n).toFixed(d).split('.');s[0]=s[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.');return (n<0?'−':'')+s.join(',');};
+  const pct=(x,d=0)=>nf(100*x,d)+' %';
+  const css=n=>getComputedStyle(raiz).getPropertyValue(n).trim();
+  const quieto=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const NOM={sigmoide:'sigmoide',tanh:'tanh',fuga:'ReLU con fuga',lineal:'lineal (sin activación)',escalon:'escalón',relu:'ReLU'};
+  const st={datos:'circulo',act:'sigmoide',ep:0,corre:false};
+  let D,A,B,raf=0;
+  function crearLado(act){const red=RedMini.crear([2,8,8,1],{oculta:act,salida:'sigmoide',semilla:42,escala:act==='escalon'?1:undefined});
+    return {red,opt:RedMini.optimizador(red,{tipo:'adam',lr:0.02}),azar:RedMini.rnd(5),u:RedMini.evaluar(red,D.X,D.Y,0,D.n)};}
+  function nueva(){D=Juguete2D.datos(st.datos,240,7);A=crearLado('relu');B=crearLado(st.act);st.ep=0;}
+  function forma(cv,act){
+    const {c,w,h}=Juguete2D.lienzo(cv),f=RedMini.ACT[act].f,lo=act==='lineal'?-4:act==='relu'||act==='fuga'?-1.2:-1.4,hi=act==='lineal'||act==='relu'||act==='fuga'?4:1.4,X=z=>w/2+z/4*(w/2-6),Y=v=>h-4-(v-lo)/(hi-lo)*(h-8);
+    c.fillStyle=css('--card');c.fillRect(0,0,w,h);c.strokeStyle=css('--grid');c.beginPath();c.moveTo(0,Y(0));c.lineTo(w,Y(0));c.moveTo(X(0),0);c.lineTo(X(0),h);c.stroke();
+    c.strokeStyle=css('--c-red');c.lineWidth=2.2;c.beginPath();for(let i=0;i<=120;i++){const z=-4+8*i/120,y=Math.max(lo,Math.min(hi,f(z)));i?c.lineTo(X(z),Y(y)):c.moveTo(X(z),Y(y));}c.stroke();
+    c.fillStyle=css('--muted');c.font='10px '+css('--f-mono');c.fillText('z',w-10,Y(0)-4);c.fillText('f(z)',X(0)+4,10);
+  }
+  function todo(){
+    forma(raiz.querySelector('#c1l3-fa'),'relu');forma(raiz.querySelector('#c1l3-fb'),st.act);
+    Juguete2D.dibujar(raiz.querySelector('#c1l3-pa'),A.red,D,raiz,{celdas:40});Juguete2D.dibujar(raiz.querySelector('#c1l3-pb'),B.red,D,raiz,{celdas:40});
+    raiz.querySelector('#c1l3-tb').textContent='Derecha: '+NOM[st.act];
+    raiz.querySelector('#c1l3-da').textContent='pérdida '+nf(A.u.perdida,3)+' · aciertos '+pct(A.u.exactitud);
+    raiz.querySelector('#c1l3-db').textContent='pérdida '+nf(B.u.perdida,3)+' · aciertos '+pct(B.u.exactitud);
+    let t='<span class="big">Época '+nf(st.ep)+': ReLU '+pct(A.u.exactitud)+' · '+NOM[st.act]+' '+pct(B.u.exactitud)+'</span>';
+    const m={sigmoide:'La sigmoide da fronteras suaves y redondeadas, pero aprende más lento: su pendiente nunca pasa de 0,25 y casi se anula lejos del cero.',
+      tanh:'tanh también da curvas suaves; está centrada en cero y su pendiente llega a 1, así que aprende más rápido que la sigmoide.',
+      fuga:'La ReLU con fuga se comporta como la ReLU (fronteras hechas de tramos rectos), pero deja pasar un poco de pendiente para valores negativos: ninguna neurona queda muerta.',
+      lineal:'Sin activación, apilar capas no sirve de nada: una composición de funciones lineales es otra función lineal. La frontera es siempre una recta, por más capas y neuronas que tenga.',
+      escalon:'Con escalón la red no aprende por gradiente: la derivada del escalón es cero, así que las capas ocultas no reciben ninguna señal de corrección. Solo se ajusta la última capa, sobre rasgos que quedaron al azar.'};
+    t+='<span>Mira la izquierda: la ReLU arma la frontera con tramos rectos, como un polígono. '+m[st.act]+'</span>';
+    if(st.ep>=300)t+=(B.u.exactitud<A.u.exactitud-0.05)?'<span class="warn">Con la misma red y los mismos datos, la activación de la derecha queda por debajo.</span>':'<span class="ok">Las dos llegan; compara la forma de la frontera, no solo los aciertos.</span>';
+    raiz.querySelector('#c1l3-out').innerHTML=t;
+  }
+  function paso(k){for(let i=0;i<k&&st.ep<600;i++){[A,B].forEach(L=>{L.u=RedMini.epoca(L.red,L.opt,D.X,D.Y,{lote:16,rnd:L.azar});});st.ep++;}}
+  const go=raiz.querySelector('#c1l3-go');
+  function parar(){st.corre=false;cancelAnimationFrame(raf);go.textContent=st.ep>=600?'Listo (600 épocas)':'Entrenar las dos';}
+  function bucle(){if(!st.corre)return;const t0=performance.now();while(performance.now()-t0<24&&st.ep<600)paso(1);
+    [A,B].forEach(L=>{L.u=RedMini.evaluar(L.red,D.X,D.Y,0,D.n);});todo();if(st.ep>=600){parar();return;}raf=requestAnimationFrame(bucle);}
+  go.addEventListener('click',()=>{if(st.corre){parar();return;}if(st.ep>=600)return;
+    if(quieto){paso(600);[A,B].forEach(L=>{L.u=RedMini.evaluar(L.red,D.X,D.Y,0,D.n);});todo();parar();return;}
+    st.corre=true;go.textContent='Pausa';bucle();});
+  function reinicio(){parar();nueva();go.textContent='Entrenar las dos';todo();}
+  raiz.querySelector('#c1l3-reset').addEventListener('click',reinicio);
+  raiz.querySelector('#c1l3-datos').addEventListener('change',e=>{st.datos=e.target.value;reinicio();});
+  raiz.querySelector('#c1l3-act').addEventListener('change',e=>{st.act=e.target.value;reinicio();});
+  let rt;const re=()=>{clearTimeout(rt);rt=setTimeout(todo,80);};
+  if(window.ResizeObserver)new ResizeObserver(re).observe(raiz.querySelector('#c1l3-pa'));
+  new MutationObserver(re).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','class']});
+  if(window.matchMedia)matchMedia('(prefers-color-scheme: dark)').addEventListener('change',re);
+  nueva();todo();
+})();
+</script>
+<script>
+(function(){
+  const raiz=document.querySelector('[id="01-lab-4"]');
+  /* RedMini: red neuronal densa mínima del curso «Aprendizaje profundo» (Float32Array, sin dependencias).
+   Plantilla: copia este bloque DENTRO de la IIFE de tu lab (el motor solo admite <script> en línea).
+   Pesos: W[l] es una matriz de tam[l+1] filas por tam[l] columnas guardada por filas: W[l][j*n+i] es el
+   peso de la entrada i hacia la neurona j. b[l][j] es el sesgo de la neurona j.
+   Uso típico:
+     const R=RedMini, red=R.crear([196,64,10],{oculta:'relu',salida:'softmax',semilla:42});
+     const opt=R.optimizador(red,{tipo:'adam',lr:0.001});
+     const X=R.digitos(DIG_X), Y=R.etiquetas(DIG_Y);      // muestra del curso
+     const azar=R.rnd(42);
+     for(let e=0;e<15;e++) R.epoca(red,opt,X,Y,{n:DIG_NENT,lote:32,rnd:azar});
+     R.evaluar(red,X,Y,DIG_NENT,DIG_NENT+DIG_NPRU)  // {perdida, exactitud} en las 500 de prueba
+*/
+const RedMini=(function(){
+  /* Azar con semilla (mulberry32) y normal estándar (Box-Muller). */
+  function rnd(s){return function(){s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  function gauss(r){let u=0;while(!u)u=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*r());}
+  /* Activaciones ocultas: f(z) y su derivada d(z). */
+  const sg=z=>1/(1+Math.exp(-z));
+  const ACT={
+    relu:{f:z=>z>0?z:0,d:z=>z>0?1:0},
+    fuga:{f:z=>z>0?z:0.01*z,d:z=>z>0?1:0.01},              // ReLU con fuga (leaky ReLU)
+    sigmoide:{f:sg,d:z=>{const s=sg(z);return s*(1-s);}},
+    tanh:{f:z=>Math.tanh(z),d:z=>{const t=Math.tanh(z);return 1-t*t;}},
+    lineal:{f:z=>z,d:()=>1}
+  };
+  /* tam: neuronas por capa, de la entrada a la salida. oculta: activación de las capas ocultas.
+     salida: 'softmax' (clases, entropía cruzada), 'sigmoide' (sí/no, entropía cruzada binaria) o 'lineal' (números, ECM).
+     Inicialización: He (√(2/n)) para ReLU, Xavier (√(1/n)) para las demás, o la escala que se pase. */
+  function crear(tam,o={}){
+    const r=rnd(o.semilla??42),oc=o.oculta||'relu',sal=o.salida||'softmax',W=[],b=[];
+    for(let l=0;l<tam.length-1;l++){
+      const n=tam[l],m=tam[l+1],esc=o.escala??((oc==='relu'||oc==='fuga')?Math.sqrt(2/n):Math.sqrt(1/n));
+      const w=new Float32Array(n*m);for(let i=0;i<w.length;i++)w[i]=gauss(r)*esc;
+      W.push(w);b.push(new Float32Array(m));
+    }
+    return {tam:tam.slice(),oculta:oc,salida:sal,W,b};
+  }
+  function ceros(red){return {W:red.W.map(w=>new Float32Array(w.length)),b:red.b.map(v=>new Float32Array(v.length))};}
+  function aplicarSalida(tipo,z){
+    const m=z.length,y=new Float32Array(m);
+    if(tipo==='softmax'){let mx=-Infinity;for(let j=0;j<m;j++)if(z[j]>mx)mx=z[j];let s=0;
+      for(let j=0;j<m;j++){y[j]=Math.exp(z[j]-mx);s+=y[j];}for(let j=0;j<m;j++)y[j]/=s;}
+    else if(tipo==='sigmoide'){for(let j=0;j<m;j++)y[j]=sg(z[j]);}
+    else y.set(z);
+    return y;
+  }
+  /* Pase hacia adelante de UN ejemplo. Devuelve {A,Z,M}: A[l] activaciones (A[0]=x), Z[l] sumas ponderadas,
+     M[l] máscara de dropout (si o.dropout>0 y o.rnd). La salida es A[A.length-1]. */
+  function adelante(red,x,o){
+    const L=red.W.length,A=[x],Z=[null],M=[null],p=o&&o.dropout||0;let a=x;
+    for(let l=0;l<L;l++){
+      const n=red.tam[l],m=red.tam[l+1],w=red.W[l],bb=red.b[l],z=new Float32Array(m);
+      for(let j=0;j<m;j++){let s=bb[j];const k=j*n;for(let i=0;i<n;i++)s+=w[k+i]*a[i];z[j]=s;}
+      let y;
+      if(l<L-1){const f=ACT[red.oculta].f;y=new Float32Array(m);for(let j=0;j<m;j++)y[j]=f(z[j]);
+        if(p>0){const mk=new Float32Array(m),r=o.rnd;for(let j=0;j<m;j++){mk[j]=r()<p?0:1/(1-p);y[j]*=mk[j];}M.push(mk);} else M.push(null);}
+      else {y=aplicarSalida(red.salida,z);M.push(null);}
+      Z.push(z);A.push(y);a=y;
+    }
+    return {A,Z,M};
+  }
+  /* El objetivo puede ser un número (la clase para softmax, el valor para una sola salida) o un vector. */
+  function objetivo(red,t){
+    if(typeof t!=='number')return t;
+    const v=new Float32Array(red.tam[red.tam.length-1]);
+    if(red.salida==='softmax')v[t]=1;else v[0]=t;
+    return v;
+  }
+  function perdida(red,y,t){
+    t=objetivo(red,t);const m=y.length;let s=0;
+    if(red.salida==='softmax'){for(let j=0;j<m;j++)if(t[j]>0)s-=t[j]*Math.log(Math.max(y[j],1e-12));return s;}
+    if(red.salida==='sigmoide'){for(let j=0;j<m;j++){const q=Math.min(Math.max(y[j],1e-7),1-1e-7);s-=t[j]*Math.log(q)+(1-t[j])*Math.log(1-q);}return s;}
+    for(let j=0;j<m;j++)s+=(y[j]-t[j])**2;return s/m;            // error cuadrático medio
+  }
+  /* Pase hacia atrás de UN ejemplo: suma sus gradientes en G (de ceros(red)) y devuelve los deltas
+     ∂pérdida/∂z de cada capa (D[l], l=1..L), útiles para dibujar el gradiente que fluye hacia atrás. */
+  function atras(red,c,t,G){
+    t=objetivo(red,t);const L=red.W.length,yL=c.A[L],D=new Array(L+1);
+    let d=new Float32Array(yL.length);
+    for(let j=0;j<d.length;j++)d[j]=red.salida==='lineal'?2*(yL[j]-t[j])/d.length:yL[j]-t[j];
+    D[L]=d;
+    for(let l=L-1;l>=0;l--){
+      const n=red.tam[l],m=red.tam[l+1],w=red.W[l],a=c.A[l];
+      if(G){const gw=G.W[l],gb=G.b[l];
+        for(let j=0;j<m;j++){const dj=d[j];if(dj===0)continue;gb[j]+=dj;const k=j*n;for(let i=0;i<n;i++)gw[k+i]+=dj*a[i];}}
+      if(l>0){
+        const dp=new Float32Array(n),fd=ACT[red.oculta].d,z=c.Z[l],mk=c.M[l];
+        for(let j=0;j<m;j++){const dj=d[j];if(dj===0)continue;const k=j*n;for(let i=0;i<n;i++)dp[i]+=w[k+i]*dj;}
+        for(let i=0;i<n;i++)dp[i]*=fd(z[i])*(mk?mk[i]:1);
+        d=dp;D[l]=d;
+      }
+    }
+    return D;
+  }
+  /* Optimizadores: 'sgd', 'momento', 'rmsprop', 'adam'. paso(G,n) usa el promedio G/n y deja G en cero.
+     o.decaimiento: decaimiento de pesos L2 (no se aplica a los sesgos). */
+  function optimizador(red,o={}){
+    const tipo=o.tipo||'sgd',b1=o.beta1??0.9,b2=o.beta2??0.999,mu=o.momento??0.9,rho=o.rho??0.9,eps=1e-8,dec=o.decaimiento||0;
+    const Mo=ceros(red),Ve=ceros(red);let t=0;
+    return {tipo,lr:o.lr??(tipo==='adam'||tipo==='rmsprop'?0.001:0.05),
+      paso(G,n){
+        t++;const k=1/(n||1),lr=this.lr,c1=1-Math.pow(b1,t),c2=1-Math.pow(b2,t);
+        for(let l=0;l<red.W.length;l++){
+          [[red.W[l],G.W[l],Mo.W[l],Ve.W[l],dec],[red.b[l],G.b[l],Mo.b[l],Ve.b[l],0]].forEach(([P,g,m,v,dd])=>{
+            for(let i=0;i<P.length;i++){
+              const gi=g[i]*k+dd*P[i];g[i]=0;
+              if(tipo==='sgd')P[i]-=lr*gi;
+              else if(tipo==='momento'){m[i]=mu*m[i]+gi;P[i]-=lr*m[i];}
+              else if(tipo==='rmsprop'){v[i]=rho*v[i]+(1-rho)*gi*gi;P[i]-=lr*gi/(Math.sqrt(v[i])+eps);}
+              else {m[i]=b1*m[i]+(1-b1)*gi;v[i]=b2*v[i]+(1-b2)*gi*gi;P[i]-=lr*(m[i]/c1)/(Math.sqrt(v[i]/c2)+eps);}
+            }
+          });
+        }
+      }};
+  }
+  function argmax(v){let k=0;for(let j=1;j<v.length;j++)if(v[j]>v[k])k=j;return k;}
+  function acierta(red,y,t){
+    if(red.salida==='softmax')return argmax(y)===(typeof t==='number'?t:argmax(t));
+    if(red.salida==='sigmoide')return (y[0]>=0.5)===((typeof t==='number'?t:t[0])>=0.5);
+    return false;
+  }
+  function barajar(n,r){const a=new Int32Array(n);for(let i=0;i<n;i++)a[i]=i;for(let i=n-1;i>0;i--){const j=Math.floor(r()*(i+1));const x=a[i];a[i]=a[j];a[j]=x;}return a;}
+  /* Una época de minilotes sobre los ejemplos [desde, desde+n) de X (Float32Array plano, d valores por ejemplo)
+     y Y (etiquetas o vectores). Devuelve la pérdida y la exactitud promedio de la época (medidas durante el
+     entrenamiento). o: {n, desde, lote, rnd, dropout}. */
+  function epoca(red,opt,X,Y,o={}){
+    const d=red.tam[0],desde=o.desde||0,n=o.n??(Y.length-desde),lote=o.lote||32,r=o.rnd||Math.random;
+    const idx=barajar(n,r),G=ceros(red),fw={dropout:o.dropout||0,rnd:r};let suma=0,ac=0;
+    for(let s=0;s<n;s+=lote){
+      const e=Math.min(n,s+lote);
+      for(let q=s;q<e;q++){
+        const i=desde+idx[q],x=X.subarray(i*d,i*d+d),c=adelante(red,x,fw),y=c.A[c.A.length-1];
+        suma+=perdida(red,y,Y[i]);if(acierta(red,y,Y[i]))ac++;atras(red,c,Y[i],G);
+      }
+      opt.paso(G,e-s);
+    }
+    return {perdida:suma/n,exactitud:ac/n};
+  }
+  function predecir(red,x){const c=adelante(red,x);return c.A[c.A.length-1];}
+  /* Pérdida y exactitud promedio en los ejemplos [desde, hasta). */
+  function evaluar(red,X,Y,desde,hasta){
+    const d=red.tam[0];let s=0,ac=0;
+    for(let i=desde;i<hasta;i++){const y=predecir(red,X.subarray(i*d,i*d+d));s+=perdida(red,y,Y[i]);if(acierta(red,y,Y[i]))ac++;}
+    return {perdida:s/(hasta-desde),exactitud:ac/(hasta-desde)};
+  }
+  /* La muestra del curso: 98 bytes por imagen de 14x14 (4 bits por píxel). Devuelve valores de 0 a 1. */
+  function digitos(b64){const s=atob(b64),X=new Float32Array(s.length*2);
+    for(let i=0;i<s.length;i++){const v=s.charCodeAt(i);X[2*i]=(v>>4)/15;X[2*i+1]=(v&15)/15;}return X;}
+  function etiquetas(txt){const Y=new Uint8Array(txt.length);for(let i=0;i<txt.length;i++)Y[i]=txt.charCodeAt(i)-48;return Y;}
+  /* Pesos guardados en el lab: {tam, oculta, salida, esc:[eW0,eb0,eW1,eb1,…], datos: base64 de int8 (W0,b0,W1,b1,…)}.
+     Cada valor es int8 × su escala. */
+  function cargar(p){
+    const red={tam:p.tam.slice(),oculta:p.oculta,salida:p.salida,W:[],b:[]},s=atob(p.datos);let k=0,e=0;
+    const toma=n=>{const v=new Float32Array(n),esc=p.esc[e++];for(let i=0;i<n;i++){let c=s.charCodeAt(k++);if(c>127)c-=256;v[i]=c*esc;}return v;};
+    for(let l=0;l<p.tam.length-1;l++){red.W.push(toma(p.tam[l]*p.tam[l+1]));red.b.push(toma(p.tam[l+1]));}
+    return red;
+  }
+  function contarPesos(red){return red.W.reduce((s,w)=>s+w.length,0)+red.b.reduce((s,v)=>s+v.length,0);}
+  return {rnd,gauss,ACT,crear,ceros,adelante,atras,perdida,optimizador,epoca,evaluar,predecir,argmax,barajar,digitos,etiquetas,cargar,contarPesos};
+})();
+
+  /* Red densa de referencia 196-64-10 entrenada con los 60.000 dígitos de MNIST (pesos_lienzo.py). */
+const PESOS_REF={"tam":[196,64,10],"oculta":"relu","salida":"softmax","esc":[0.01304302,0.00382931,0.01706079,0.00161951],"datos":"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"};
+
+  /* 20 dígitos de prueba de la muestra de MNIST (LeCun, Cortes y Burges, 1998), 14x14, 16 tonos. */
+const MUESTRA20_Y='01234567890123456789';
+const MUESTRA20_X='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';
+  const nf=(n,d=0)=>{const s=Math.abs(n).toFixed(d).split('.');s[0]=s[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.');return (n<0?'−':'')+s.join(',');};
+  const pct=(x,d=0)=>nf(100*x,d)+' %';
+  const css=n=>getComputedStyle(raiz).getPropertyValue(n).trim();
+  const red=RedMini.cargar(PESOS_REF);
+  const EJ=RedMini.digitos(MUESTRA20_X),EJY=RedMini.etiquetas(MUESTRA20_Y);let ej=0;
+  const dib=raiz.querySelector('#c1l4-dib'),ve=raiz.querySelector('#c1l4-ve'),out=raiz.querySelector('#c1l4-out'),barras=raiz.querySelector('#c1l4-barras');
+  barras.innerHTML=Array.from({length:10},(_,k)=>'<div class="c1l4-fila"><span>'+k+'</span><span class="tr"><i></i></span><span>0 %</span></div>').join('');
+  let trazos=[],actual=null,entrada=null,muestra=null;   // trazos: listas de puntos en coordenadas 0..1
+  function lienzo(){const w=dib.clientWidth||280,r=window.devicePixelRatio||1;dib.width=Math.round(w*r);dib.height=Math.round(w*r);const c=dib.getContext('2d');c.setTransform(r,0,0,r,0,0);return {c,w};}
+  function pintar(){
+    const {c,w}=lienzo();c.fillStyle=css('--card');c.fillRect(0,0,w,w);
+    if(muestra){const t=w/14;for(let i=0;i<196;i++){const v=muestra[i];if(v<=0)continue;c.globalAlpha=v;c.fillStyle=css('--ink');c.fillRect((i%14)*t,Math.floor(i/14)*t,t+.5,t+.5);}c.globalAlpha=1;return;}
+    c.strokeStyle=css('--ink');c.lineCap='round';c.lineJoin='round';c.lineWidth=w*0.065;
+    trazos.forEach(tr=>{c.beginPath();tr.forEach((p,i)=>i?c.lineTo(p[0]*w,p[1]*w):c.moveTo(p[0]*w,p[1]*w));if(tr.length===1)c.lineTo(tr[0][0]*w+.1,tr[0][1]*w);c.stroke();});
+    if(!trazos.length){c.fillStyle=css('--muted');c.font='14px '+css('--f-display');c.textAlign='center';c.fillText('dibuja un número grande',w/2,w/2);}
+  }
+  /* Del trazo a los 196 números que entran a la red, como se preparó MNIST */
+  function preparar(){
+    const pts=trazos.flat();if(!pts.length)return null;const S=280;
+    let x0=1,y0=1,x1=0,y1=0;pts.forEach(([x,y])=>{x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y);});
+    const lado=Math.max(x1-x0,y1-y0)*S,grosor=Math.max(6,lado*0.12);   // trazo proporcional al tamaño, como un lápiz
+    const of=document.createElement('canvas');of.width=S;of.height=S;const c=of.getContext('2d');
+    c.fillStyle='#000';c.fillRect(0,0,S,S);c.strokeStyle='#fff';c.lineCap='round';c.lineJoin='round';c.lineWidth=grosor;
+    trazos.forEach(tr=>{c.beginPath();tr.forEach((p,i)=>i?c.lineTo(p[0]*S,p[1]*S):c.moveTo(p[0]*S,p[1]*S));if(tr.length===1)c.lineTo(tr[0][0]*S+.1,tr[0][1]*S);c.stroke();});
+    const d=c.getImageData(0,0,S,S).data,g=new Float32Array(S*S);let bx0=S,by0=S,bx1=-1,by1=-1;
+    for(let i=0;i<S*S;i++){g[i]=d[4*i]/255;if(g[i]>0.05){const x=i%S,y=(i/S)|0;if(x<bx0)bx0=x;if(x>bx1)bx1=x;if(y<by0)by0=y;if(y>by1)by1=y;}}
+    if(bx1<0)return null;
+    const bw=bx1-bx0+1,bh=by1-by0+1,s=20/Math.max(bw,bh),ox=(28-bw*s)/2,oy=(28-bh*s)/2;
+    const m28=new Float32Array(784);          // cada píxel del recorte suma su tinta en la casilla de 28x28 que le toca
+    for(let y=by0;y<=by1;y++)for(let x=bx0;x<=bx1;x++){const v=g[y*S+x];if(!v)continue;
+      const tx=Math.min(27,Math.floor(ox+(x-bx0+.5)*s)),ty=Math.min(27,Math.floor(oy+(y-by0+.5)*s));m28[ty*28+tx]+=v*s*s;}
+    let sm=0,cx=0,cy=0;for(let i=0;i<784;i++){const v=Math.min(1,m28[i]);m28[i]=v;sm+=v;cx+=v*(i%28);cy+=v*((i/28)|0);}
+    const dx=Math.round(13.5-cx/sm),dy=Math.round(13.5-cy/sm),c28=new Float32Array(784);   // centro de masa al centro
+    for(let y=0;y<28;y++)for(let x=0;x<28;x++){const X=x-dx,Y=y-dy;if(X>=0&&X<28&&Y>=0&&Y<28)c28[y*28+x]=m28[Y*28+X];}
+    const x14=new Float32Array(196);
+    for(let y=0;y<14;y++)for(let x=0;x<14;x++){const v=(c28[(2*y)*28+2*x]+c28[(2*y)*28+2*x+1]+c28[(2*y+1)*28+2*x]+c28[(2*y+1)*28+2*x+1])/4;x14[y*14+x]=Math.round(v*15)/15;}
+    return x14;
+  }
+  function verRed(x){
+    const c=ve.getContext('2d');const im=c.createImageData(14,14);
+    const card=css('--card'),ink=css('--ink');const rgb=h=>{const m=h.replace('#','');const f=m.length===3?m.split('').map(q=>q+q).join(''):m;return [0,2,4].map(i=>parseInt(f.slice(i,i+2),16));};
+    let a=[255,255,255],b=[0,0,0];try{a=rgb(card);b=rgb(ink);}catch(e){}
+    for(let i=0;i<196;i++){const v=x?x[i]:0;for(let k=0;k<3;k++)im.data[4*i+k]=Math.round(a[k]+(b[k]-a[k])*v);im.data[4*i+3]=255;}
+    c.putImageData(im,0,0);
+  }
+  function clasificar(){
+    entrada=muestra||preparar();verRed(entrada);
+    const filas=barras.children;
+    if(!entrada){for(const f of filas){f.classList.remove('top');f.children[1].firstChild.style.width='0';f.children[2].textContent='0 %';}
+      out.innerHTML='<span class="big">Sin dígito todavía</span><span>Dibuja un número grande que llene casi todo el recuadro, o pide un dígito de MNIST.</span>';return;}
+    const p=RedMini.predecir(red,entrada),orden=[...p.keys()].sort((a,b)=>p[b]-p[a]),k=orden[0],k2=orden[1];
+    for(let j=0;j<10;j++){const f=filas[j];f.classList.toggle('top',j===k);f.children[1].firstChild.style.width=(100*p[j]).toFixed(1)+'%';f.children[2].textContent=pct(p[j]);}
+    let txt='<span class="big">La red dice '+k+' con '+pct(p[k])+' de probabilidad</span>';
+    if(muestra)txt+='<span>Este dígito de MNIST es un '+EJY[(ej+19)%20]+(EJY[(ej+19)%20]===k?': <span class="ok">acertó</span>.':': <span class="warn">se equivocó</span>.')+'</span>';
+    txt+=p[k]>=0.9?'<span class="ok">Confianza alta: en la oficina, esta casilla se cargaría sin revisión.</span>':'<span class="warn">Confianza baja: esta casilla iría a una persona del equipo de Rosa.</span>';
+    txt+='<span>Segunda opción: '+k2+' ('+pct(p[k2],1)+'). Para decidir, la red hizo 13.184 multiplicaciones: 196 × 64 en la capa oculta y 64 × 10 en la salida.</span>';
+    out.innerHTML=txt;
+  }
+  function punto(e){const r=dib.getBoundingClientRect();return [Math.min(1,Math.max(0,(e.clientX-r.left)/r.width)),Math.min(1,Math.max(0,(e.clientY-r.top)/r.height))];}
+  dib.addEventListener('pointerdown',e=>{e.preventDefault();if(muestra){muestra=null;trazos=[];}try{dib.setPointerCapture(e.pointerId);}catch(_){}actual=[punto(e)];trazos.push(actual);pintar();});
+  dib.addEventListener('pointermove',e=>{if(!actual)return;e.preventDefault();actual.push(punto(e));pintar();});
+  const fin=()=>{if(!actual)return;actual=null;clasificar();};
+  dib.addEventListener('pointerup',fin);dib.addEventListener('pointercancel',fin);
+  raiz.querySelector('#c1l4-borrar').addEventListener('click',()=>{trazos=[];muestra=null;pintar();clasificar();});
+  raiz.querySelector('#c1l4-ej').addEventListener('click',()=>{trazos=[];muestra=EJ.slice(ej*196,ej*196+196);ej=(ej+1)%20;pintar();clasificar();});
+  let rt;const re=()=>{clearTimeout(rt);rt=setTimeout(()=>{pintar();verRed(entrada);},60);};
+  if(window.ResizeObserver)new ResizeObserver(re).observe(dib);
+  new MutationObserver(re).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','class']});
+  if(window.matchMedia)matchMedia('(prefers-color-scheme: dark)').addEventListener('change',re);
+  pintar();clasificar();
+})();
+</script>
+</body>
+</html>
